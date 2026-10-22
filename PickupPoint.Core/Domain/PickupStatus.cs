@@ -1,4 +1,5 @@
 namespace PickupPoint.Core.Domain;
+
 /// <summary>Стан замовлення на видачу в його життєвому циклі.</summary>
 public enum PickupStatus
 {
