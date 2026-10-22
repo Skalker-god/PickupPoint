@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using PickupPoint.Core.Domain;
 
 PickupOrder order = new()
