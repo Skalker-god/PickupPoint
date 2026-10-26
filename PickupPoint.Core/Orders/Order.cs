@@ -4,29 +4,46 @@ using System.Linq;
 
 namespace PickupPoint.Core.Orders;
 
-// клас
+/// <summary>
+/// Замовлення пункту видачі: одержувач, рядки з товарами, розрахунок суми й стан.
+/// </summary>
 public class Order
 {
     private readonly List<string[]> _lines = new List<string[]>();
 
-    // конструктор
+    // public string prim; // примітка, поки не треба
+
+    /// <summary>
+    /// Створює замовлення з указаним ідентифікатором і одержувачем; дата створення — поточна.
+    /// </summary>
+    /// <param name="id">Ідентифікатор замовлення.</param>
+    /// <param name="recipientName">Ім’я одержувача.</param>
     public Order(string id, string recipientName)
     {
-        Id = id; // ставимо id
-        RecipientName = recipientName; // ставимо cl
-        CreatedAt = DateTime.Now; // ставимо дату
+        Id = id;
+        RecipientName = recipientName;
+        CreatedAt = DateTime.Now;
     }
 
+    /// <summary>Унікальний ідентифікатор замовлення.</summary>
     public string Id { get; private set; }
 
+    /// <summary>Ім’я одержувача замовлення.</summary>
     public string RecipientName { get; private set; }
 
-    public int Status { get; private set; } // 0-новий,1-оплач,2-відпр,3-скасов
+    /// <summary>
+    /// Код стану: 0 — нове, 1 — прибуло до пункту, 2 — видано одержувачу, 3 — скасовано.
+    /// </summary>
+    public int Status { get; private set; }
 
+    /// <summary>Дата й час створення замовлення.</summary>
     public DateTime CreatedAt { get; private set; }
 
-    // пошук
-    public static Order? FindById(List<Order> orders, string orderId)
+    /// <summary>Шукає замовлення за ідентифікатором у переданому списку.</summary>
+    /// <param name="orders">Список замовлень, у якому виконується пошук.</param>
+    /// <param name="orderId">Ідентифікатор шуканого замовлення.</param>
+    /// <returns>Знайдене замовлення або null, якщо збігів немає.</returns>
+    public static Order FindById(List<Order> orders, string orderId)
     {
         for (int i = 0; i < orders.Count; i++)
         {
@@ -39,17 +56,24 @@ public class Order
         return null;
     }
 
-    // метод додавання
+    /// <summary>Додає до замовлення рядок із товаром.</summary>
+    /// <param name="sku">Артикул товару.</param>
+    /// <param name="quantity">Кількість одиниць товару.</param>
+    /// <param name="unitPrice">Ціна за одиницю, грн.</param>
     public void AddLine(string sku, int quantity, decimal unitPrice)
     {
         string[] line = new string[3];
         line[0] = sku;
         line[1] = quantity.ToString();
         line[2] = unitPrice.ToString();
-        _lines.Add(line); // додаємо t у ln
+        _lines.Add(line);
     }
 
-    // ProcessData
+    /// <summary>
+    /// Обчислює суму до сплати з урахуванням знижок і податку на додану вартість.
+    /// </summary>
+    /// <param name="isRegularRecipient">Ознака постійного одержувача, якому належить знижка.</param>
+    /// <returns>Сума до сплати, заокруглена до двох знаків.</returns>
     public decimal CalculateTotal(bool isRegularRecipient)
     {
         decimal total = 0;
@@ -59,11 +83,12 @@ public class Order
         {
             int quantity = int.Parse(_lines[i][1]);
             decimal unitPrice = decimal.Parse(_lines[i][2]);
-            total += quantity * unitPrice; // додаємо до суми
-            lineCount++; // збільшуємо kolvo на одиницю
+            total = total + quantity * unitPrice;
+            lineCount = lineCount + 1;
         }
 
         // if (sum1 > 500) { sum1 = sum1 - 50; } // стара знижка
+        // знижка постійному одержувачу має пріоритет над знижкою на велике замовлення
         if (isRegularRecipient == true && total > 1000)
         {
             total = total * 0.9m;
@@ -71,6 +96,10 @@ public class Order
         else if (total > 5000)
         {
             total = total * 0.85m;
+        }
+        else
+        {
+            total = total;
         }
 
         if (lineCount > 10)
@@ -83,11 +112,18 @@ public class Order
             total = 0;
         }
 
-        total += total * 0.2m; // ПДВ
-        return Math.Round(total, 2); // повертаємо sum1
+        // ПДВ нараховується на суму вже після всіх знижок
+        total = total + total * 0.2m;
+        return Math.Round(total, 2);
     }
 
-    // міняємо статус
+    /// <summary>
+    /// Змінює стан замовлення, якщо перехід дозволений правилами предметної області.
+    /// </summary>
+    /// <param name="newStatus">Цільовий код стану замовлення.</param>
+    /// <returns>
+    /// true, якщо перехід виконано; false, якщо він заборонений.
+    /// </returns>
     public bool TryChangeStatus(int newStatus)
     {
         if (Status == 0 && newStatus == 1)
@@ -108,14 +144,15 @@ public class Order
             return true;
         }
 
-        return false; // не можна
+        return false;
     }
 
-    // перевірка
+    /// <summary>Перевіряє, чи замовлення заповнене коректно.</summary>
+    /// <returns>true, якщо замовлення відповідає всім обмеженням; інакше false.</returns>
     public bool IsValid()
     {
         if (Id != null
-            && Id != string.Empty
+            && Id != ""
             && RecipientName != null
             && RecipientName.Length > 2
             && _lines.Count > 0
@@ -129,10 +166,11 @@ public class Order
         return false;
     }
 
-    // звіт
+    /// <summary>Формує текстовий звіт за рядками замовлення та підсумковою сумою.</summary>
+    /// <returns>Багаторядковий текст звіту.</returns>
     public string BuildReport()
     {
-        string report = string.Empty;
+        string report = "";
         for (int i = 0; i < _lines.Count; i++)
         {
             report = report + "Товар: " + _lines[i][0]
@@ -143,6 +181,6 @@ public class Order
         }
 
         report = report + "Разом: " + CalculateTotal(false) + "\n";
-        return report; // повертаємо s
+        return report;
     }
 }
