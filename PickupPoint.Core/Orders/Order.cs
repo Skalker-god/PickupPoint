@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
 namespace PickupPoint.Core.Orders;
 
 /// <summary>
@@ -9,11 +5,52 @@ namespace PickupPoint.Core.Orders;
 /// </summary>
 public class Order
 {
+    /// <summary>Ставка податку на додану вартість.</summary>
+    private const decimal VatRate = 0.2m;
+
+    /// <summary>Поріг суми для знижки постійному одержувачу.</summary>
+    private const decimal RegularDiscountThreshold = 1000m;
+
+    /// <summary>Частка знижки постійному одержувачу.</summary>
+    private const decimal RegularDiscountRate = 0.10m;
+
+    /// <summary>Поріг суми для знижки на велике замовлення.</summary>
+    private const decimal LargeOrderThreshold = 5000m;
+
+    /// <summary>Частка знижки на велике замовлення.</summary>
+    private const decimal LargeOrderDiscountRate = 0.15m;
+
+    /// <summary>Кількість рядків, з якої діє гуртова знижка.</summary>
+    private const int BulkLineCount = 10;
+
+    /// <summary>Сума гуртової знижки, грн.</summary>
+    private const decimal BulkDiscountAmount = 100m;
+
+    /// <summary>Найбільша допустима кількість рядків у замовленні (не включно).</summary>
+    private const int MaxLineCount = 100;
+
+    /// <summary>Найменша допустима довжина імені одержувача.</summary>
+    private const int MinRecipientNameLength = 3;
+
+    /// <summary>Кількість знаків після коми в грошовій сумі.</summary>
+    private const int CurrencyDecimals = 2;
+
+    /// <summary>Код стану «нове».</summary>
+    private const int StatusNew = 0;
+
+    /// <summary>Код стану «прибуло до пункту».</summary>
+    private const int StatusArrived = 1;
+
+    /// <summary>Код стану «видано одержувачу».</summary>
+    private const int StatusIssued = 2;
+
+    /// <summary>Код стану «скасовано».</summary>
+    private const int StatusCancelled = 3;
+
     private readonly List<string[]> _lines = new List<string[]>();
 
-    // public string prim; // примітка, поки не треба
-
     /// <summary>
+    /// Initializes a new instance of the <see cref="Order"/> class.
     /// Створює замовлення з указаним ідентифікатором і одержувачем; дата створення — поточна.
     /// </summary>
     /// <param name="id">Ідентифікатор замовлення.</param>
@@ -25,25 +62,25 @@ public class Order
         CreatedAt = DateTime.Now;
     }
 
-    /// <summary>Унікальний ідентифікатор замовлення.</summary>
+    /// <summary>Gets унікальний ідентифікатор замовлення.</summary>
     public string Id { get; private set; }
 
-    /// <summary>Ім’я одержувача замовлення.</summary>
+    /// <summary>Gets ім’я одержувача замовлення.</summary>
     public string RecipientName { get; private set; }
 
     /// <summary>
-    /// Код стану: 0 — нове, 1 — прибуло до пункту, 2 — видано одержувачу, 3 — скасовано.
+    /// Gets код стану: 0 — нове, 1 — прибуло до пункту, 2 — видано одержувачу, 3 — скасовано.
     /// </summary>
     public int Status { get; private set; }
 
-    /// <summary>Дата й час створення замовлення.</summary>
+    /// <summary>Gets дата й час створення замовлення.</summary>
     public DateTime CreatedAt { get; private set; }
 
     /// <summary>Шукає замовлення за ідентифікатором у переданому списку.</summary>
     /// <param name="orders">Список замовлень, у якому виконується пошук.</param>
     /// <param name="orderId">Ідентифікатор шуканого замовлення.</param>
     /// <returns>Знайдене замовлення або null, якщо збігів немає.</returns>
-    public static Order FindById(List<Order> orders, string orderId)
+    public static Order? FindById(List<Order> orders, string orderId)
     {
         for (int i = 0; i < orders.Count; i++)
         {
@@ -72,7 +109,7 @@ public class Order
     /// <summary>
     /// Обчислює суму до сплати з урахуванням знижок і податку на додану вартість.
     /// </summary>
-    /// <param name="isRegularRecipient">Ознака постійного одержувача, якому належить знижка.</param>
+    /// <param name="isRegularRecipient">Чи є одержувач постійним (має право на знижку).</param>
     /// <returns>Сума до сплати, заокруглена до двох знаків.</returns>
     public decimal CalculateTotal(bool isRegularRecipient)
     {
@@ -83,28 +120,23 @@ public class Order
         {
             int quantity = int.Parse(_lines[i][1]);
             decimal unitPrice = decimal.Parse(_lines[i][2]);
-            total = total + quantity * unitPrice;
-            lineCount = lineCount + 1;
+            total += quantity * unitPrice;
+            lineCount++;
         }
 
-        // if (sum1 > 500) { sum1 = sum1 - 50; } // стара знижка
         // знижка постійному одержувачу має пріоритет над знижкою на велике замовлення
-        if (isRegularRecipient == true && total > 1000)
+        if (isRegularRecipient && total > RegularDiscountThreshold)
         {
-            total = total * 0.9m;
+            total *= 1m - RegularDiscountRate;
         }
-        else if (total > 5000)
+        else if (total > LargeOrderThreshold)
         {
-            total = total * 0.85m;
-        }
-        else
-        {
-            total = total;
+            total *= 1m - LargeOrderDiscountRate;
         }
 
-        if (lineCount > 10)
+        if (lineCount > BulkLineCount)
         {
-            total = total - 100;
+            total -= BulkDiscountAmount;
         }
 
         if (total < 0)
@@ -113,8 +145,8 @@ public class Order
         }
 
         // ПДВ нараховується на суму вже після всіх знижок
-        total = total + total * 0.2m;
-        return Math.Round(total, 2);
+        total += total * VatRate;
+        return Math.Round(total, CurrencyDecimals);
     }
 
     /// <summary>
@@ -126,21 +158,21 @@ public class Order
     /// </returns>
     public bool TryChangeStatus(int newStatus)
     {
-        if (Status == 0 && newStatus == 1)
+        if (Status == StatusNew && newStatus == StatusArrived)
         {
-            Status = 1;
+            Status = StatusArrived;
             return true;
         }
 
-        if (Status == 1 && newStatus == 2)
+        if (Status == StatusArrived && newStatus == StatusIssued)
         {
-            Status = 2;
+            Status = StatusIssued;
             return true;
         }
 
-        if (Status == 0 && newStatus == 3)
+        if (Status == StatusNew && newStatus == StatusCancelled)
         {
-            Status = 3;
+            Status = StatusCancelled;
             return true;
         }
 
@@ -151,14 +183,13 @@ public class Order
     /// <returns>true, якщо замовлення відповідає всім обмеженням; інакше false.</returns>
     public bool IsValid()
     {
-        if (Id != null
-            && Id != ""
+        if (!string.IsNullOrEmpty(Id)
             && RecipientName != null
-            && RecipientName.Length > 2
+            && RecipientName.Length >= MinRecipientNameLength
             && _lines.Count > 0
-            && _lines.Count < 100
-            && Status >= 0
-            && Status <= 3)
+            && _lines.Count < MaxLineCount
+            && Status >= StatusNew
+            && Status <= StatusCancelled)
         {
             return true;
         }
@@ -170,7 +201,7 @@ public class Order
     /// <returns>Багаторядковий текст звіту.</returns>
     public string BuildReport()
     {
-        string report = "";
+        string report = string.Empty;
         for (int i = 0; i < _lines.Count; i++)
         {
             report = report + "Товар: " + _lines[i][0]

@@ -5,19 +5,19 @@ public sealed class PickupOrder
 {
     private readonly List<PickupOrderLine> _lines = new();
 
-    /// <summary>Унікальний ідентифікатор замовлення.</summary>
+    /// <summary>Gets унікальний ідентифікатор замовлення.</summary>
     public int Id { get; init; }
 
-    /// <summary>Ідентифікатор одержувача замовлення.</summary>
+    /// <summary>Gets ідентифікатор одержувача замовлення.</summary>
     public int RecipientId { get; init; }
 
-    /// <summary>Поточний стан замовлення.</summary>
+    /// <summary>Gets or sets поточний стан замовлення.</summary>
     public PickupStatus Status { get; set; } = PickupStatus.New;
 
-    /// <summary>Дата й час створення замовлення.</summary>
+    /// <summary>Gets дата й час створення замовлення.</summary>
     public DateTimeOffset CreatedAt { get; init; }
 
-    /// <summary>Позиції замовлення, доступні лише для читання.</summary>
+    /// <summary>Gets позиції замовлення, доступні лише для читання.</summary>
     public IReadOnlyList<PickupOrderLine> Lines => _lines;
 
     /// <summary>Додає позицію до замовлення.</summary>

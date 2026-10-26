@@ -34,6 +34,14 @@ dotnet_naming_symbols.priv_field.applicable_accessibilities = private
 dotnet_naming_style.underscore_camel.capitalization = camel_case
 dotnet_naming_style.underscore_camel.required_prefix = _
 
+# іменування: константи в PascalCase, без підкреслення (правило конкретніше за попереднє)
+dotnet_naming_rule.const_pascal.symbols = const_field
+dotnet_naming_rule.const_pascal.style = pascal_case_style
+dotnet_naming_rule.const_pascal.severity = warning
+dotnet_naming_symbols.const_field.applicable_kinds = field
+dotnet_naming_symbols.const_field.required_modifiers = const
+dotnet_naming_style.pascal_case_style.capitalization = pascal_case
+
 # StyleCop: свідомо вимкнені правила
 # заголовок з ліцензією в навчальному проєкті не потрібен
 dotnet_diagnostic.SA1633.severity = none
