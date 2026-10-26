@@ -34,6 +34,14 @@ dotnet_naming_symbols.priv_field.applicable_accessibilities = private
 dotnet_naming_style.underscore_camel.capitalization = camel_case
 dotnet_naming_style.underscore_camel.required_prefix = _
 
+# іменування: константи в PascalCase, без підкреслення (правило конкретніше за попереднє)
+dotnet_naming_rule.const_pascal.symbols = const_field
+dotnet_naming_rule.const_pascal.style = pascal_case_style
+dotnet_naming_rule.const_pascal.severity = warning
+dotnet_naming_symbols.const_field.applicable_kinds = field
+dotnet_naming_symbols.const_field.required_modifiers = const
+dotnet_naming_style.pascal_case_style.capitalization = pascal_case
+
 # StyleCop: свідомо вимкнені правила
 # заголовок з ліцензією в навчальному проєкті не потрібен
 dotnet_diagnostic.SA1633.severity = none
@@ -43,14 +51,16 @@ dotnet_diagnostic.SA1101.severity = none
 dotnet_diagnostic.SA1200.severity = none
 # приватні поля іменуємо з _, як прийнято в .NET
 dotnet_diagnostic.SA1309.severity = none
-# XML-документацію вимагатимемо з ЛР № 4, поки що ні
+# XML-документацію вимагаємо з ЛР № 2: SA1600 і SA1602 повернуто в warning
+# XML-аналіз вимкнено в консольному застосунку: документація потрібна лише бібліотеці Core
 dotnet_diagnostic.SA0001.severity = none
-dotnet_diagnostic.SA1600.severity = none
-dotnet_diagnostic.SA1601.severity = none
-dotnet_diagnostic.SA1602.severity = none
-dotnet_diagnostic.SA1611.severity = none
-dotnet_diagnostic.SA1615.severity = none
-dotnet_diagnostic.SA1616.severity = none
+dotnet_diagnostic.SA1600.severity = warning
+dotnet_diagnostic.SA1602.severity = warning
+# описи властивостей і конструкторів українською не починаються з англійських «Gets or sets»
+dotnet_diagnostic.SA1623.severity = none
+dotnet_diagnostic.SA1642.severity = none
+# культурозалежний Parse і ToString винесено в реєстр технічного боргу (ЛР № 6)
+dotnet_diagnostic.CA1305.severity = none
 # кома в кінці багаторядкового ініціалізатора необов'язкова
 dotnet_diagnostic.SA1413.severity = none
 

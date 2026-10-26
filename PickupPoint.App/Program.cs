@@ -1,31 +1,13 @@
-using System.Globalization;
-using PickupPoint.Core.Domain;
+using System.Text;
+using PickupPoint.Core.Orders;
 
-PickupOrder order = new()
-{
-    Id = 1,
-    RecipientId = 10,
-    CreatedAt = DateTimeOffset.Now,
-};
+Console.OutputEncoding = Encoding.UTF8;
 
-order.AddLine(new PickupOrderLine
-{
-    Sku = "PP-1001",
-    Quantity = 3,
-    UnitPrice = 59.90m,
-});
-
-order.AddLine(new PickupOrderLine
-{
-    Sku = "PP-2002",
-    Quantity = 1,
-    UnitPrice = 120.00m,
-});
-
-string total = order.Total()
-    .ToString("F2", CultureInfo.InvariantCulture);
-
-Console.WriteLine($"Замовлення #{order.Id}");
-Console.WriteLine($"Стан: {order.Status}");
-Console.WriteLine($"Позицій: {order.Lines.Count}");
-Console.WriteLine($"Сума: {total}");
+var order = new Order("A-1001", "Іваненко");
+order.AddLine("SKU-1", 3, 250m);
+order.AddLine("SKU-2", 12, 90m);
+Console.WriteLine(order.CalculateTotal(false));
+Console.WriteLine(order.CalculateTotal(true));
+Console.WriteLine(order.IsValid());
+Console.WriteLine(order.TryChangeStatus(1));
+Console.Write(order.BuildReport());
