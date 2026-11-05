@@ -144,3 +144,11 @@ dotnet_diagnostic.SA1642.severity = none
 dotnet_diagnostic.SA1413.severity = none
 # культурозалежні Parse і ToString: борг B-05, усувається в ЛР 6
 dotnet_diagnostic.CA1305.severity = none
+
+# ---------- ЛР 3 ----------
+[PickupPoint.Tests/**.cs]
+# Тести: XML-документація й підкреслення в іменах тестових методів (N-14) не потрібні.
+dotnet_diagnostic.CS1591.severity = none
+dotnet_diagnostic.SA1600.severity = none
+dotnet_diagnostic.SA1602.severity = none
+dotnet_diagnostic.CA1707.severity = none
