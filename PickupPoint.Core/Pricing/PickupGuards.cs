@@ -44,4 +44,17 @@ internal static class PickupGuards
             EnsureLineValid(line);
         }
     }
+
+    public static void EnsureRequestValid(TotalRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(request.Recipient);
+        EnsureHeaderValid(
+            request.OrderId,
+            request.Recipient.Name,
+            request.Recipient.Email);
+        EnsureLinesValid(request.Lines);
+        ArgumentOutOfRangeException.ThrowIfNegative(
+            request.DeliveryPrice);
+    }
 }

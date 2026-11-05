@@ -7,34 +7,42 @@ namespace PickupPoint.Tests;
 public sealed class OrderTotalCalculatorTests
 {
     [Fact]
-    public void Process_RegularRecipient_Returns1292()
+    public void Calculate_RegularRecipient_Returns1292()
     {
-        List<PickupOrderLine> lines = new()
-        {
-            new PickupOrderLine { Sku = "A1", Quantity = 12, UnitPrice = 100m },
-            new PickupOrderLine { Sku = "B2", Quantity = 1, UnitPrice = 250m },
-        };
-        decimal total = OrderTotalCalculator.Process(
-            1, "Іваненко", "i@ex.com", true, lines,
-            new DateOnly(2026, 3, 10), null, PickupStatus.New, false,
-            60m, out PickupStatus next);
-        Assert.Equal(1292.70m, total);
-        Assert.Equal(PickupStatus.Arrived, next);
+        TotalRequest request = new(
+            OrderId: 1,
+            Recipient: new RecipientInfo("Іваненко", "i@ex.com", true),
+            Lines: new List<PickupOrderLine>
+            {
+                new() { Sku = "A1", Quantity = 12, UnitPrice = 100m },
+                new() { Sku = "B2", Quantity = 1, UnitPrice = 250m },
+            },
+            CreatedOn: new DateOnly(2026, 3, 10),
+            CouponCode: null,
+            Status: PickupStatus.New,
+            DeliveryPrice: 60m);
+        TotalResult result = OrderTotalCalculator.Calculate(request);
+        Assert.Equal(1292.70m, result.Total);
+        Assert.Equal(PickupStatus.Arrived, result.Status);
     }
 
     [Fact]
-    public void Process_SmallOrder_AddsDelivery()
+    public void Calculate_SmallOrder_AddsDelivery()
     {
-        List<PickupOrderLine> lines = new()
-        {
-            new PickupOrderLine { Sku = "A1", Quantity = 2, UnitPrice = 200m },
-        };
-        decimal total = OrderTotalCalculator.Process(
-            2, "Петренко", "p@ex.com", false, lines,
-            new DateOnly(2026, 3, 10), "SALE10", PickupStatus.Arrived,
-            false, 60m, out PickupStatus next);
-        Assert.Equal(420m, total);
-        Assert.Equal(PickupStatus.Issued, next);
+        TotalRequest request = new(
+            OrderId: 2,
+            Recipient: new RecipientInfo("Петренко", "p@ex.com", false),
+            Lines: new List<PickupOrderLine>
+            {
+                new() { Sku = "A1", Quantity = 2, UnitPrice = 200m },
+            },
+            CreatedOn: new DateOnly(2026, 3, 10),
+            CouponCode: "SALE10",
+            Status: PickupStatus.Arrived,
+            DeliveryPrice: 60m);
+        TotalResult result = OrderTotalCalculator.Calculate(request);
+        Assert.Equal(420m, result.Total);
+        Assert.Equal(PickupStatus.Issued, result.Status);
     }
 
     [Fact]

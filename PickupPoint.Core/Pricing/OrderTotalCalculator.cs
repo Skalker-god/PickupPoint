@@ -121,58 +121,27 @@ public static class OrderTotalCalculator
         };
     }
 
-    /// <summary>Тимчасовий диспетчер: викликає кроки в потрібному порядку.</summary>
-    /// <param name="orderId">Номер замовлення.</param>
-    /// <param name="recipientName">Ім’я одержувача.</param>
-    /// <param name="recipientEmail">Пошта одержувача.</param>
-    /// <param name="isRegular">Ознака постійного одержувача.</param>
-    /// <param name="lines">Позиції замовлення.</param>
-    /// <param name="createdOn">День створення замовлення.</param>
-    /// <param name="couponCode">Код купона або null.</param>
-    /// <param name="status">Поточний стан.</param>
-    /// <param name="printToConsole">Чи друкувати звіт.</param>
-    /// <param name="deliveryPrice">Тариф доставки, грн.</param>
-    /// <param name="newStatus">Наступний стан.</param>
-    /// <returns>Підсумок замовлення, грн.</returns>
-    public static decimal Process(
-        int orderId,
-        string recipientName,
-        string recipientEmail,
-        bool isRegular,
-        IReadOnlyList<PickupOrderLine> lines,
-        DateOnly createdOn,
-        string? couponCode,
-        PickupStatus status,
-        bool printToConsole,
-        decimal deliveryPrice,
-        out PickupStatus newStatus)
+    /// <summary>
+    /// Обчислює підсумок замовлення та наступний стан. Не змінює жодних
+    /// об’єктів і нічого не друкує.
+    /// </summary>
+    /// <param name="request">Запит із даними замовлення.</param>
+    /// <returns>Сума до сплати в гривнях, округлена до копійок, і наступний стан.</returns>
+    /// <exception cref="ArgumentNullException">Запит або одержувач — null.</exception>
+    /// <exception cref="ArgumentException">Некоректна пошта чи порожній список позицій.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Некоректний номер, кількість чи ціна.</exception>
+    public static TotalResult Calculate(TotalRequest request)
     {
-        PickupGuards.EnsureHeaderValid(orderId, recipientName, recipientEmail);
-        decimal total = SubtotalOf(lines);
-        total -= RecipientDiscountOf(total, isRegular);
+        PickupGuards.EnsureRequestValid(request);
+        decimal total = SubtotalOf(request.Lines);
+        total -= RecipientDiscountOf(total, request.Recipient.IsRegular);
         total -= VolumeDiscountOf(total);
-        total -= CouponDiscountOf(total, couponCode);
-        total -= WeekendDiscountOf(total, createdOn);
-        total += DeliveryFeeOf(total, deliveryPrice);
-        total = status == PickupStatus.Cancelled
+        total -= CouponDiscountOf(total, request.CouponCode);
+        total -= WeekendDiscountOf(total, request.CreatedOn);
+        total += DeliveryFeeOf(total, request.DeliveryPrice);
+        total = request.Status == PickupStatus.Cancelled
             ? 0m
             : Math.Round(Math.Max(total, 0m), PricingRules.CurrencyDigits);
-        newStatus = NextStatusOf(status, total);
-
-        if (printToConsole)
-        {
-            Console.WriteLine("Замовлення № " + orderId);
-            Console.WriteLine("Одержувач: " + recipientName);
-            foreach (PickupOrderLine line in lines)
-            {
-                Console.WriteLine(line.Sku + " x " +
-                    line.Quantity);
-            }
-
-            Console.WriteLine("Разом: " + total);
-            Console.WriteLine("Стан: " + newStatus);
-        }
-
-        return total;
+        return new TotalResult(total, NextStatusOf(request.Status, total));
     }
 }
