@@ -1,4 +1,5 @@
 <Solution>
   <Project Path="PickupPoint.App/PickupPoint.App.csproj" />
   <Project Path="PickupPoint.Core/PickupPoint.Core.csproj" />
+  <Project Path="PickupPoint.Tests/PickupPoint.Tests.csproj" />
 </Solution>
