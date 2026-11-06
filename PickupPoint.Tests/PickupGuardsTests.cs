@@ -14,15 +14,9 @@ public sealed class PickupGuardsTests
     }
 
     [Fact]
-    public void EnsureLineValid_ZeroQuantity_ThrowsRange()
+    public void EnsureLineValid_NullLine_ThrowsArgumentNull()
     {
-        PickupOrderLine line = new()
-        {
-            Sku = "A1",
-            Quantity = 0,
-            UnitPrice = 10m,
-        };
-        Assert.Throws<ArgumentOutOfRangeException>(
-            () => PickupGuards.EnsureLineValid(line));
+        Assert.Throws<ArgumentNullException>(
+            () => PickupGuards.EnsureLineValid(null!));
     }
 }
