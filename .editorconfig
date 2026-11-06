@@ -145,6 +145,13 @@ dotnet_diagnostic.SA1413.severity = none
 # культурозалежні Parse і ToString: борг B-05, усувається в ЛР 6
 dotnet_diagnostic.CA1305.severity = none
 
+# ---------- ЛР 4 ----------
+# ADR-005: клас-Бог навмисно порушує SOLID; до рефакторингу теку виключено
+# з аналізу, щоб збірка лишалася чистою. Виключення зникає разом із текою.
+[PickupPoint.Core/Legacy/*.cs]
+generated_code = true
+dotnet_diagnostic.CS1591.severity = none
+
 # ---------- ЛР 3 ----------
 [PickupPoint.Tests/**.cs]
 # Тести: XML-документація й підкреслення в іменах тестових методів (N-14) не потрібні.
