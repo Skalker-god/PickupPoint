@@ -62,18 +62,18 @@ public class Order
         CreatedAt = DateTime.Now;
     }
 
-    /// <summary>Gets унікальний ідентифікатор замовлення.</summary>
+    /// <summary>Унікальний ідентифікатор замовлення.</summary>
     public string Id { get; private set; }
 
-    /// <summary>Gets ім’я одержувача замовлення.</summary>
+    /// <summary>Ім’я одержувача замовлення.</summary>
     public string RecipientName { get; private set; }
 
     /// <summary>
-    /// Gets код стану: 0 — нове, 1 — прибуло до пункту, 2 — видано одержувачу, 3 — скасовано.
+    /// Код стану: 0 — нове, 1 — прибуло до пункту, 2 — видано одержувачу, 3 — скасовано.
     /// </summary>
     public int Status { get; private set; }
 
-    /// <summary>Gets дата й час створення замовлення.</summary>
+    /// <summary>Дата й час створення замовлення.</summary>
     public DateTime CreatedAt { get; private set; }
 
     /// <summary>Шукає замовлення за ідентифікатором у переданому списку.</summary>

@@ -32,8 +32,8 @@ public sealed class OrderReportTests
             Recipient: new RecipientInfo("Іваненко", "i@ex.com", true),
             Lines: new List<PickupOrderLine>
             {
-                new() { Sku = "A1", Quantity = 12, UnitPrice = 100m },
-                new() { Sku = "B2", Quantity = 1, UnitPrice = 250m },
+                new("A1", 12, 100m),
+                new("B2", 1, 250m),
             },
             CreatedOn: new DateOnly(2026, 3, 10),
             CouponCode: null,

@@ -14,8 +14,8 @@ static TotalRequest BuildSampleRequest()
         Recipient: new RecipientInfo("Іваненко", "i@ex.com", true),
         Lines: new List<PickupOrderLine>
         {
-            new() { Sku = "SKU00001", Quantity = 12, UnitPrice = 100m },
-            new() { Sku = "SKU00002", Quantity = 1, UnitPrice = 250m },
+            new("SKU00001", 12, 100m),
+            new("SKU00002", 1, 250m),
         },
         CreatedOn: new DateOnly(2026, 3, 10),
         CouponCode: null,
