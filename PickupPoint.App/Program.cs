@@ -1,24 +1,26 @@
+using System.Globalization;
+using PickupPoint.Core.Abstractions;
 using PickupPoint.Core.Domain;
 using PickupPoint.Core.Pricing;
 using PickupPoint.Core.Reporting;
+using PickupPoint.Core.Services;
+using PickupPoint.Core.Storage;
 
-TotalRequest request = BuildSampleRequest();
-TotalResult result = OrderTotalCalculator.Calculate(request);
-string report = OrderReport.TextOf(request, result);
-new OrderReportPrinter(Console.Out).Print(report);
+// Композиційний корінь: єдине місце, де створюють конкретні реалізації.
+#pragma warning disable CA1859 // залежність навмисно тримаємо як абстракцію
+IPickupOrderRepository repository = new InMemoryPickupOrderRepository();
+#pragma warning restore CA1859
+IPricingPolicy pricing = new DiscountPricingPolicy(0.05m);
+INotifier notifier = new ConsoleNotifier();
+PickupOrderService service = new(repository, pricing, notifier);
 
-static TotalRequest BuildSampleRequest()
-{
-    return new TotalRequest(
-        OrderId: 1,
-        Recipient: new RecipientInfo("Іваненко", "i@ex.com", true),
-        Lines: new List<PickupOrderLine>
-        {
-            new("SKU00001", 12, 100m),
-            new("SKU00002", 1, 250m),
-        },
-        CreatedOn: new DateOnly(2026, 3, 10),
-        CouponCode: null,
-        Status: PickupStatus.New,
-        DeliveryPrice: 60m);
-}
+PickupOrder order = new(1, 100, DateTimeOffset.Now);
+order.AddLine(new PickupOrderLine("SKU-1", 2, 250m));
+service.Place(order, "i@ex.com");
+
+decimal total = service.TotalOf(order);
+Console.WriteLine(
+    "Сума: " + total.ToString("0.00", CultureInfo.InvariantCulture));
+
+PickupOrderCsvReport report = new(pricing);
+Console.WriteLine(report.BuildCsv(repository.GetAll()).TrimEnd());
