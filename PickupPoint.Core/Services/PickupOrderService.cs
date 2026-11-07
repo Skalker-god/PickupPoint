@@ -1,5 +1,6 @@
 using PickupPoint.Core.Abstractions;
 using PickupPoint.Core.Domain;
+using PickupPoint.Core.Errors;
 
 namespace PickupPoint.Core.Services;
 
@@ -52,26 +53,27 @@ public sealed class PickupOrderService
     }
 
     /// <summary>
-    /// Додає позицію до замовлення, розбираючи рядки з консолі в ядрі.
-    /// Тимчасовий стан «до барикади»: розбір зовнішніх даних живе в Core.
+    /// Додає типізовану позицію до нового замовлення. Ядро не знає про рядки
+    /// консолі: розбір виконано на барикаді в застосунку.
     /// </summary>
     /// <param name="orderId">Ідентифікатор замовлення.</param>
-    /// <param name="sku">Артикул у вигляді рядка.</param>
-    /// <param name="quantity">Кількість у вигляді рядка.</param>
-    /// <param name="price">Ціна у вигляді рядка.</param>
-    /// <exception cref="FormatException">Рядок не є числом.</exception>
-    public void AddLine(
-        int orderId,
-        string sku,
-        string quantity,
-        string price)
+    /// <param name="line">Перевірена позиція замовлення.</param>
+    /// <exception cref="ArgumentNullException">Позиція — null.</exception>
+    /// <exception cref="DomainRuleException">
+    /// Замовлення не знайдено або воно вже не у стані <see cref="PickupStatus.New"/>.
+    /// </exception>
+    public void AddLine(int orderId, PickupOrderLine line)
     {
-        PickupOrder order = _repository.GetById(orderId)
-            ?? throw new InvalidOperationException(
-                $"Замовлення {orderId} не знайдено.");
-        int parsedQuantity = int.Parse(quantity);
-        decimal parsedPrice = decimal.Parse(price);
-        order.AddLine(new PickupOrderLine(sku, parsedQuantity, parsedPrice));
+        ArgumentNullException.ThrowIfNull(line);
+        PickupOrder order = RequireOrder(orderId);
+        if (order.Status != PickupStatus.New)
+        {
+            throw new DomainRuleException(
+                "order.editable",
+                $"Стан {order.Status}: замовлення {orderId} не редагується.");
+        }
+
+        order.AddLine(line);
     }
 
     /// <summary>Обчислює суму замовлення за підставленою політикою.</summary>
@@ -89,4 +91,14 @@ public sealed class PickupOrderService
 
         return Math.Round(total, 2, MidpointRounding.AwayFromZero);
     }
+
+    /// <summary>Знаходить замовлення або порушує правило його існування.</summary>
+    /// <param name="orderId">Ідентифікатор замовлення.</param>
+    /// <returns>Знайдене замовлення.</returns>
+    /// <exception cref="DomainRuleException">Замовлення не знайдено.</exception>
+    private PickupOrder RequireOrder(int orderId) =>
+        _repository.GetById(orderId)
+        ?? throw new DomainRuleException(
+            "order.exists",
+            $"Замовлення {orderId} не знайдено");
 }
