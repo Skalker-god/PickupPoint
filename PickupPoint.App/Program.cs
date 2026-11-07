@@ -15,8 +15,8 @@ INotifier notifier = new ConsoleNotifier();
 PickupOrderService service = new(repository, pricing, notifier);
 
 PickupOrder order = new(1, 100, DateTimeOffset.Now);
-order.AddLine(new PickupOrderLine("SKU-1", 2, 250m));
 service.Place(order, "i@ex.com");
+service.AddLine(order.Id, "SKU-1", "2", "250.00");
 
 decimal total = service.TotalOf(order);
 Console.WriteLine(

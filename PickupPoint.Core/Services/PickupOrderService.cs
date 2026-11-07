@@ -51,6 +51,29 @@ public sealed class PickupOrderService
             "Замовлення прийнято в пункті видачі.");
     }
 
+    /// <summary>
+    /// Додає позицію до замовлення, розбираючи рядки з консолі в ядрі.
+    /// Тимчасовий стан «до барикади»: розбір зовнішніх даних живе в Core.
+    /// </summary>
+    /// <param name="orderId">Ідентифікатор замовлення.</param>
+    /// <param name="sku">Артикул у вигляді рядка.</param>
+    /// <param name="quantity">Кількість у вигляді рядка.</param>
+    /// <param name="price">Ціна у вигляді рядка.</param>
+    /// <exception cref="FormatException">Рядок не є числом.</exception>
+    public void AddLine(
+        int orderId,
+        string sku,
+        string quantity,
+        string price)
+    {
+        PickupOrder order = _repository.GetById(orderId)
+            ?? throw new InvalidOperationException(
+                $"Замовлення {orderId} не знайдено.");
+        int parsedQuantity = int.Parse(quantity);
+        decimal parsedPrice = decimal.Parse(price);
+        order.AddLine(new PickupOrderLine(sku, parsedQuantity, parsedPrice));
+    }
+
     /// <summary>Обчислює суму замовлення за підставленою політикою.</summary>
     /// <param name="order">Замовлення, суму якого обчислюють.</param>
     /// <returns>Сума позицій у гривнях, округлена до копійок.</returns>
