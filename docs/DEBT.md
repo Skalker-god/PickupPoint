@@ -6,10 +6,11 @@
 | B-02 | D-13 | `Math.Round(total, 2)` без `MidpointRounding.AwayFromZero` | додати режим округлення | ЛР 6 |
 | B-03 | D-10, X-04 | Стан — `int Status` і константи `StatusNew…` замість `PickupStatus`; немає стану `Returned` | перейти на перелічення `PickupStatus` | ЛР 6 |
 | B-04 | D-08, S-08 | `FindById(List<Order>)` приймає змінюваний список і шукає циклом `for` | `IReadOnlyList` і `FirstOrDefault` або словник | ЛР 6 |
-| B-05 | D-06, D-07 | Позиції зберігаються як `string[]` і щоразу розбираються через `Parse` (CA1305 придушено) | використати `PickupOrderLine` | ЛР 6 |
+| B-05 | D-06, D-07 | Позиції зберігаються як `string[]` і щоразу розбираються через `Parse` (CA1305 придушено) | використати `PickupOrderLine` | закрито в ЛР 5 |
 | B-06 | S-11 | `CalculateTotal` — 37 рядків при попереджувальній межі 30 | виділити методи знижок і ПДВ | ЛР 6 |
 | B-07 | S-07 | `IsValid` — умова з 7 операндів в одному виразі | іменовані булеві змінні | ЛР 6 |
 | B-08 | C-10 | XML-описи властивостей починалися з «Gets» | прибрати за правилом бойскаута | закрито в ЛР 4 |
 | B-09 | N-02; глосарій | Два типи замовлення: `Orders/Order` (успадкований) і `Domain/PickupOrder` (з ЛР 1) | об'єднати в `PickupOrder`, видалити `Order` | ЛР 6 |
 | B-10 | D-13 | `Math.Round(…, CurrencyDigits)` у `Calculate` без `MidpointRounding.AwayFromZero` | додати режим округлення окремим комітом із тестом на 0,125 | ЛР 6 |
 | B-11 | S-11 | `PickupGuards.EnsureLineValid` повторює перевірки, які вже виконує конструктор `PickupOrderLine` | прибрати дублювання після стабілізації тестів | ЛР 6 |
+| B-12 | CA1848 | Прямі виклики `LogDebug`/`LogInformation`/`LogWarning`/`LogError` замість `LoggerMessage` (приглушено локально, ADR-008) | перейти на `[LoggerMessage]`, якщо логування стане гарячим шляхом | ЛР 8 |
