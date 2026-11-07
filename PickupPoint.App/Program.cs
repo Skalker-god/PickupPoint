@@ -27,7 +27,7 @@ internal static class Program
                 options.TimestampFormat = "HH:mm:ss ";
                 options.IncludeScopes = true;
             });
-            builder.SetMinimumLevel(LogLevel.Debug);
+            builder.SetMinimumLevel(ReadMinimumLevel());
         });
         ILogger<PickupOrderService> logger =
             factory.CreateLogger<PickupOrderService>();
@@ -70,6 +70,15 @@ internal static class Program
             Console.WriteLine("Внутрішня помилка. Дивіться журнал.");
             return 2;
         }
+    }
+
+    private static LogLevel ReadMinimumLevel()
+    {
+        string? raw = Environment.GetEnvironmentVariable(
+            "PICKUPPOINT_LOG_LEVEL");
+        return Enum.TryParse(raw, ignoreCase: true, out LogLevel level)
+            ? level
+            : LogLevel.Debug;
     }
 
     private static void Run(

@@ -33,7 +33,9 @@ dotnet run --project PickupPoint.App
   з полем `Rule` і, за потреби, `innerException`.
 - Сервіс пише структурований журнал через `ILogger<PickupOrderService>`:
   рівні Debug, Information, Warning, Error, іменовані заповнювачі та
-  `BeginScope("Order:{OrderId}", id)`.
+  `BeginScope("Order:{OrderId}", id)`. Мінімальний рівень задає змінна
+  `PICKUPPOINT_LOG_LEVEL` (типово `Debug`), наприклад
+  `set PICKUPPOINT_LOG_LEVEL=Warning`.
 - `FileAuditLog` реалізує `IDisposable`; `using` гарантує закриття файлу
   навіть після винятку. Перевірка: тест
   `AfterExceptionInsideUsing_FileHandleIsReleased`.
