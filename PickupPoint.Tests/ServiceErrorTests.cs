@@ -60,6 +60,62 @@ public sealed class ServiceErrorTests
         Assert.Equal(3, order.Lines[0].Quantity);
     }
 
+    [Fact]
+    public void Load_ForMissingOrder_ThrowsExistsRule()
+    {
+        (PickupOrderService service, _) = NewService();
+
+        DomainRuleException exception = Assert.Throws<DomainRuleException>(
+            () => service.Load(99));
+
+        Assert.Equal("order.exists", exception.Rule);
+    }
+
+    [Fact]
+    public void Load_ForExistingOrder_ReturnsIt()
+    {
+        (PickupOrderService service, PickupOrder order) = NewService();
+        service.Place(order, "i@ex.com");
+
+        Assert.Same(order, service.Load(order.Id));
+    }
+
+    [Fact]
+    public void Cancel_ForNewOrder_ChangesStatus()
+    {
+        (PickupOrderService service, PickupOrder order) = NewService();
+        service.Place(order, "i@ex.com");
+
+        service.Cancel(order.Id, "одержувач відмовився");
+
+        Assert.Equal(PickupStatus.Cancelled, order.Status);
+    }
+
+    [Fact]
+    public void Cancel_ForIssuedOrder_ThrowsCancellableRule()
+    {
+        (PickupOrderService service, PickupOrder order) = NewService();
+        service.Place(order, "i@ex.com");
+        service.AddLine(order.Id, new PickupOrderLine("SKU-1", 1, 10m));
+        order.MarkArrived();
+        order.Issue(DateTimeOffset.Now);
+
+        DomainRuleException exception = Assert.Throws<DomainRuleException>(
+            () => service.Cancel(order.Id, "пізно"));
+
+        Assert.Equal("order.cancellable", exception.Rule);
+    }
+
+    [Fact]
+    public void Cancel_WithEmptyReason_ThrowsArgument()
+    {
+        (PickupOrderService service, PickupOrder order) = NewService();
+        service.Place(order, "i@ex.com");
+
+        Assert.Throws<ArgumentException>(
+            () => service.Cancel(order.Id, " "));
+    }
+
     private static (PickupOrderService Service, PickupOrder Order) NewService()
     {
         InMemoryPickupOrderRepository repository = new();

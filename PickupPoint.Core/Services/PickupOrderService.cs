@@ -76,42 +76,37 @@ public sealed class PickupOrderService
         order.AddLine(line);
     }
 
-    /// <summary>
-    /// Тимчасовий стан «до власного винятку»: відсутність замовлення
-    /// позначають значенням <c>null</c>.
-    /// </summary>
+    /// <summary>Знаходить замовлення або порушує правило його існування.</summary>
     /// <param name="orderId">Ідентифікатор замовлення.</param>
-    /// <returns>Замовлення або <c>null</c>, якщо його не знайдено.</returns>
-    public PickupOrder? Load(int orderId) => _repository.GetById(orderId);
-
-    /// <summary>
-    /// Тимчасовий стан «до власного винятку»: результат операції скасування
-    /// повертають числовим кодом.
-    /// </summary>
-    /// <param name="orderId">Ідентифікатор замовлення.</param>
-    /// <param name="reason">Причина скасування.</param>
-    /// <returns>0 — успіх; -1 — немає замовлення; -2 — стан забороняє
-    /// скасування; -3 — причина порожня.</returns>
-    public int CancelByCode(int orderId, string reason)
+    /// <returns>Знайдене замовлення.</returns>
+    /// <exception cref="DomainRuleException">Замовлення не знайдено.</exception>
+    public PickupOrder Load(int orderId)
     {
-        PickupOrder? order = _repository.GetById(orderId);
-        if (order is null)
-        {
-            return -1;
-        }
+        return _repository.GetById(orderId)
+            ?? throw new DomainRuleException(
+                "order.exists",
+                $"Замовлення {orderId} не знайдено");
+    }
 
+    /// <summary>Скасовує замовлення, яке ще не видано.</summary>
+    /// <param name="orderId">Ідентифікатор замовлення.</param>
+    /// <param name="reason">Непорожня причина скасування.</param>
+    /// <exception cref="ArgumentException">Причина порожня.</exception>
+    /// <exception cref="DomainRuleException">
+    /// Замовлення не знайдено або його стан забороняє скасування.
+    /// </exception>
+    public void Cancel(int orderId, string reason)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(reason);
+        PickupOrder order = Load(orderId);
         if (order.Status is not (PickupStatus.New or PickupStatus.Arrived))
         {
-            return -2;
-        }
-
-        if (string.IsNullOrWhiteSpace(reason))
-        {
-            return -3;
+            throw new DomainRuleException(
+                "order.cancellable",
+                $"Стан {order.Status}: замовлення {orderId} не скасовується.");
         }
 
         order.Cancel();
-        return 0;
     }
 
     /// <summary>Обчислює суму замовлення за підставленою політикою.</summary>
