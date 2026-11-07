@@ -83,8 +83,8 @@ internal static class Program
         auditLog.Write("place", order.Id);
         Console.WriteLine("Демонстраційне замовлення № 1 створено.");
         Console.WriteLine(
-            "Команди: 1 — додати позицію, 2 — прибуло, 3 — видати, "
-            + "4 — скасувати, 5 — звіт, 6 — зберегти звіт, 0 — вихід.");
+            "1-додати 2-прибуло 3-видати 4-скасувати "
+            + "5-звіт 6-експорт 0-вихід");
         bool running = true;
         while (running)
         {
