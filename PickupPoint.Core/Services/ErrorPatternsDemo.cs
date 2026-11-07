@@ -1,15 +1,13 @@
-﻿#pragma warning disable CA1031 // навмисний антиприклад: catch (Exception)
-#pragma warning disable CA2200 // навмисний антиприклад: throw ex
-#pragma warning disable CA2000 // навмисний антиприклад: StreamWriter без using
-using PickupPoint.Core.Abstractions;
+﻿using PickupPoint.Core.Abstractions;
 using PickupPoint.Core.Domain;
+using PickupPoint.Core.Errors;
 
 namespace PickupPoint.Core.Services;
 
 /// <summary>
-/// Навчальні фрагменти «до виправлення»: чотири антипатерни обробки помилок,
-/// перенесені з методички на типи PickupPoint. Після виправлення методи
-/// зберігають ту саму поведінку, але не приховують дефектів.
+/// Навчальні фрагменти обробки помилок, перенесені з методички на типи
+/// PickupPoint. Після виправлення методи не проковтують винятків, зберігають
+/// стек викликів і звільняють файлові ресурси.
 /// </summary>
 public sealed class ErrorPatternsDemo
 {
@@ -17,31 +15,27 @@ public sealed class ErrorPatternsDemo
 
     /// <summary>Створює демонстраційний клас над сховищем замовлень.</summary>
     /// <param name="repository">Сховище замовлень.</param>
+    /// <exception cref="ArgumentNullException">Сховище — null.</exception>
     public ErrorPatternsDemo(IPickupOrderRepository repository)
     {
+        ArgumentNullException.ThrowIfNull(repository);
         _repository = repository;
     }
 
     /// <summary>
-    /// АНТИПАТЕРН 4: виняток як керування потоком замість <c>TryParse</c>.
+    /// Підраховує додатні кількості без винятків як керування потоком.
     /// </summary>
     /// <param name="rows">Рядки з кількістю.</param>
     /// <returns>Кількість додатних чисел.</returns>
     public static int CountValidQuantities(string[] rows)
     {
+        ArgumentNullException.ThrowIfNull(rows);
         int valid = 0;
         foreach (string row in rows)
         {
-            try
+            if (int.TryParse(row, out int quantity) && quantity > 0)
             {
-                int quantity = int.Parse(row);
-                if (quantity > 0)
-                {
-                    valid++;
-                }
-            }
-            catch (FormatException)
-            {
+                valid++;
             }
         }
 
@@ -49,54 +43,60 @@ public sealed class ErrorPatternsDemo
     }
 
     /// <summary>
-    /// АНТИПАТЕРН ресурсів: <see cref="StreamWriter"/> не звільняється через
-    /// <c>using</c>, тому при винятку файл лишається відкритим.
+    /// Експортує замовлення у файл; <c>using</c> закриває потік навіть при
+    /// винятку всередині блоку.
     /// </summary>
     /// <param name="path">Шлях до файлу звіту.</param>
     /// <param name="order">Замовлення, яке експортують.</param>
+    /// <exception cref="ArgumentNullException">Замовлення — null.</exception>
     public static void ExportReport(string path, PickupOrder order)
     {
-        StreamWriter writer = new(path);
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        ArgumentNullException.ThrowIfNull(order);
+        using StreamWriter writer = new(path);
         writer.WriteLine($"Замовлення {order.Id}");
         writer.WriteLine(order.Lines.Count);
-        writer.Close();
     }
 
     /// <summary>
-    /// АНТИПАТЕРН 1: порожній <c>catch</c> і повернення <c>null</c>.
+    /// Знаходить замовлення або порушує правило його існування.
+    /// Порожній <c>catch</c> і повернення <c>null</c> прибрано.
     /// </summary>
     /// <param name="orderId">Ідентифікатор замовлення.</param>
-    /// <returns>Замовлення або <c>null</c>.</returns>
-    public PickupOrder? Load(int orderId)
+    /// <returns>Знайдене замовлення.</returns>
+    /// <exception cref="DomainRuleException">Замовлення не знайдено.</exception>
+    public PickupOrder Load(int orderId)
     {
-        try
-        {
-            return _repository.GetById(orderId);
-        }
-        catch (Exception)
-        {
-        }
-
-        return null;
+        return _repository.GetById(orderId)
+            ?? throw new DomainRuleException(
+                "order.exists",
+                $"Замовлення {orderId} не знайдено");
     }
 
     /// <summary>
-    /// АНТИПАТЕРНИ 2 і 3: широке перехоплення та <c>throw ex</c>, що стирає
-    /// початковий стек викликів.
+    /// Скасовує замовлення, перехоплюючи лише конкретний тип і зберігаючи
+    /// первинний виняток через <c>innerException</c>.
     /// </summary>
     /// <param name="orderId">Ідентифікатор замовлення.</param>
-    /// <param name="reason">Причина скасування.</param>
+    /// <param name="reason">Непорожня причина скасування.</param>
+    /// <exception cref="ArgumentException">Причина порожня.</exception>
+    /// <exception cref="DomainRuleException">
+    /// Замовлення не знайдено або його стан забороняє скасування.
+    /// </exception>
     public void Cancel(int orderId, string reason)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(reason);
+        PickupOrder order = Load(orderId);
         try
         {
-            PickupOrder order = _repository.GetById(orderId)!;
             order.Cancel();
         }
-        catch (Exception ex)
+        catch (InvalidOperationException ex)
         {
-            Console.WriteLine("Щось пішло не так");
-            throw ex;
+            throw new DomainRuleException(
+                "order.cancellable",
+                $"Стан {order.Status}: замовлення {orderId} не скасовується.",
+                ex);
         }
     }
 }
