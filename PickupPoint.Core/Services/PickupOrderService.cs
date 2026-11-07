@@ -76,6 +76,44 @@ public sealed class PickupOrderService
         order.AddLine(line);
     }
 
+    /// <summary>
+    /// Тимчасовий стан «до власного винятку»: відсутність замовлення
+    /// позначають значенням <c>null</c>.
+    /// </summary>
+    /// <param name="orderId">Ідентифікатор замовлення.</param>
+    /// <returns>Замовлення або <c>null</c>, якщо його не знайдено.</returns>
+    public PickupOrder? Load(int orderId) => _repository.GetById(orderId);
+
+    /// <summary>
+    /// Тимчасовий стан «до власного винятку»: результат операції скасування
+    /// повертають числовим кодом.
+    /// </summary>
+    /// <param name="orderId">Ідентифікатор замовлення.</param>
+    /// <param name="reason">Причина скасування.</param>
+    /// <returns>0 — успіх; -1 — немає замовлення; -2 — стан забороняє
+    /// скасування; -3 — причина порожня.</returns>
+    public int CancelByCode(int orderId, string reason)
+    {
+        PickupOrder? order = _repository.GetById(orderId);
+        if (order is null)
+        {
+            return -1;
+        }
+
+        if (order.Status is not (PickupStatus.New or PickupStatus.Arrived))
+        {
+            return -2;
+        }
+
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            return -3;
+        }
+
+        order.Cancel();
+        return 0;
+    }
+
     /// <summary>Обчислює суму замовлення за підставленою політикою.</summary>
     /// <param name="order">Замовлення, суму якого обчислюють.</param>
     /// <returns>Сума позицій у гривнях, округлена до копійок.</returns>
