@@ -484,3 +484,7 @@ $RECYCLE.BIN/
 # власні винятки проєкту
 *.user
 data/*.local.json
+
+# файли, створені демонстрацією ЛР 5
+audit.log
+report.csv

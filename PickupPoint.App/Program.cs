@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Microsoft.Extensions.Logging;
 using PickupPoint.Core.Abstractions;
+using PickupPoint.Core.Audit;
 using PickupPoint.Core.Domain;
 using PickupPoint.Core.Errors;
 using PickupPoint.Core.Pricing;
@@ -36,7 +37,8 @@ internal static class Program
         PickupOrderService service = new(repository, pricing, notifier, logger);
         try
         {
-            Run(service, repository, pricing);
+            using FileAuditLog auditLog = new("audit.log");
+            Run(service, repository, pricing, auditLog);
             return 0;
         }
         catch (DomainRuleException ex)
@@ -47,6 +49,20 @@ internal static class Program
                 ex.Message);
             Console.WriteLine($"Помилка: {ex.Message}");
             return 1;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            logger.LogError(ex, "Немає прав на запис файлу звіту");
+            Console.WriteLine(
+                "Не вдалося зберегти звіт: немає прав на запис.");
+            return 3;
+        }
+        catch (IOException ex)
+        {
+            logger.LogError(ex, "Збій файлового ресурсу");
+            Console.WriteLine(
+                "Не вдалося виконати файлову операцію: журнал або звіт.");
+            return 3;
         }
         catch (Exception ex)
         {
@@ -59,14 +75,16 @@ internal static class Program
     private static void Run(
         PickupOrderService service,
         IPickupOrderRepository repository,
-        IPricingPolicy pricing)
+        IPricingPolicy pricing,
+        FileAuditLog auditLog)
     {
         PickupOrder order = new(1, 100, DateTimeOffset.Now);
         service.Place(order, "i@ex.com");
+        auditLog.Write("place", order.Id);
         Console.WriteLine("Демонстраційне замовлення № 1 створено.");
         Console.WriteLine(
             "Команди: 1 — додати позицію, 2 — прибуло, 3 — видати, "
-            + "4 — скасувати, 5 — звіт, 0 — вихід.");
+            + "4 — скасувати, 5 — звіт, 6 — зберегти звіт, 0 — вихід.");
         bool running = true;
         while (running)
         {
@@ -84,23 +102,34 @@ internal static class Program
                     running = false;
                     break;
                 case "1":
-                    AddLineInteractive(service, order);
+                    AddLineInteractive(service, order, auditLog);
                     break;
                 case "2":
                     Execute(
-                        order.MarkArrived,
+                        () =>
+                        {
+                            order.MarkArrived();
+                            auditLog.Write("arrive", order.Id);
+                        },
                         "Замовлення прибуло до пункту видачі.");
                     break;
                 case "3":
                     Execute(
-                        () => order.Issue(DateTimeOffset.Now),
+                        () =>
+                        {
+                            order.Issue(DateTimeOffset.Now);
+                            auditLog.Write("issue", order.Id);
+                        },
                         "Замовлення видано одержувачу.");
                     break;
                 case "4":
-                    CancelInteractive(service, order);
+                    CancelInteractive(service, order, auditLog);
                     break;
                 case "5":
-                    ShowReport(service, repository, pricing, order);
+                    ShowReport(service, repository, pricing, order, auditLog);
+                    break;
+                case "6":
+                    ExportReport(repository, pricing, order, auditLog);
                     break;
                 default:
                     Console.WriteLine("Невідома команда, спробуйте ще раз.");
@@ -111,7 +140,8 @@ internal static class Program
 
     private static void AddLineInteractive(
         PickupOrderService service,
-        PickupOrder order)
+        PickupOrder order,
+        FileAuditLog auditLog)
     {
         Console.Write("Артикул (порожній — назад): ");
         string? sku = Console.ReadLine();
@@ -137,6 +167,7 @@ internal static class Program
             try
             {
                 service.AddLine(order.Id, parsed.Value!);
+                auditLog.Write("add-line", order.Id);
                 Console.WriteLine("Позицію додано.");
                 return;
             }
@@ -150,13 +181,15 @@ internal static class Program
 
     private static void CancelInteractive(
         PickupOrderService service,
-        PickupOrder order)
+        PickupOrder order,
+        FileAuditLog auditLog)
     {
         Console.Write("Причина скасування: ");
         string? reason = Console.ReadLine() ?? string.Empty;
         try
         {
             service.Cancel(order.Id, reason);
+            auditLog.Write("cancel", order.Id);
             Console.WriteLine("Замовлення скасовано.");
         }
         catch (DomainRuleException ex)
@@ -173,13 +206,30 @@ internal static class Program
         PickupOrderService service,
         IPickupOrderRepository repository,
         IPricingPolicy pricing,
-        PickupOrder order)
+        PickupOrder order,
+        FileAuditLog auditLog)
     {
         PickupOrderCsvReport report = new(pricing);
         Console.WriteLine(report.BuildCsv(repository.GetAll()).TrimEnd());
         decimal total = service.TotalOf(order);
         Console.WriteLine(
             "Сума: " + total.ToString("0.00", CultureInfo.InvariantCulture));
+        auditLog.Write("report", order.Id);
+    }
+
+    private static void ExportReport(
+        IPickupOrderRepository repository,
+        IPricingPolicy pricing,
+        PickupOrder order,
+        FileAuditLog auditLog)
+    {
+        const string ReportPath = "report.csv";
+        PickupOrderCsvReport report = new(pricing);
+        string csv = report.BuildCsv(repository.GetAll());
+        ReportFileWriter.Export(ReportPath, csv);
+        auditLog.Write("export", order.Id);
+        Console.WriteLine(
+            $"Звіт збережено у файлі {ReportPath}");
     }
 
     private static void Execute(Action action, string successMessage)
