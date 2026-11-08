@@ -51,7 +51,7 @@ public class PickupLine
 
 public class LegacyPickupProcessor
 {
-    private readonly List<string> _log = new();
+    private readonly OperationLog _log = new();
     private readonly DiscountPolicy _discounts = new();
     private readonly ShippingPolicy _shipping = new();
     private readonly ReportBuilder _report = new();
@@ -112,8 +112,6 @@ public class LegacyPickupProcessor
 
     public string DumpLog()
     {
-        string r = "";
-        foreach (var l in _log) r += l + "\n";
-        return r;
+        return _log.Dump();
     }
 }
