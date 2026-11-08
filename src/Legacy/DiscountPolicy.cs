@@ -1,26 +1,27 @@
+using System.Collections.Generic;
+
 namespace PickupPoint.Legacy;
 
 public sealed class DiscountPolicy
 {
+    private readonly IReadOnlyList<IDiscountRule> _rules = new IDiscountRule[]
+    {
+        new VipDiscountRule(),
+        new StaffDiscountRule(),
+        new LoyalDiscountRule(),
+        new NoDiscountRule(),
+    };
+
     public decimal For(decimal subtotal, Recipient recipient)
     {
-        decimal discount = 0m;
-        if (recipient.Kind == RecipientKind.Vip)
+        foreach (var rule in _rules)
         {
-            discount = subtotal * PricingRules.VipRate;
-            if (discount > PricingRules.MaxDiscount) discount = PricingRules.MaxDiscount;
-        }
-        else if (recipient.Kind == RecipientKind.Staff)
-        {
-            discount = subtotal * PricingRules.StaffRate;
-            if (discount > PricingRules.MaxDiscount) discount = PricingRules.MaxDiscount;
-        }
-        else if (recipient.DoneCount > PricingRules.LoyalOrders)
-        {
-            discount = subtotal * PricingRules.LoyalRate;
-            if (discount > PricingRules.MaxDiscount) discount = PricingRules.MaxDiscount;
+            if (rule.AppliesTo(recipient))
+            {
+                return rule.AmountFor(subtotal);
+            }
         }
 
-        return discount;
+        return 0m;
     }
 }
