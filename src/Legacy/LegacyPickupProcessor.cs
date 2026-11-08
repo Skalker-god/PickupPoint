@@ -47,41 +47,36 @@ public class LegacyPickupProcessor
     private readonly ShippingPolicy _shipping = new();
     private readonly ReportBuilder _report = new();
 
-    public string Handle(int orderId, int recipientId,
-        string recipientName, string? recipientMail,
-        RecipientKind recipientKind, int recipientDone,
-        List<PickupLine>? items, OrderState state,
-        string currency, DateTime createdAt, bool sendMail)
+    public string Handle(OrderRequest request)
     {
-        if (items is null) return "ERR: null";
-        if (items.Count == 0) return "ERR: empty";
-        if (state is not (OrderState.New or OrderState.Paid))
-            return "ERR: state";
-        if (recipientMail is null || !recipientMail.Contains("@"))
-            return "ERR: mail";
-        _log.Add("ok " + orderId);
+        string? error = Validate(request);
+        if (error != null) return error;
+        _log.Add("ok " + request.OrderId);
 
-        _tmpSum = Subtotal(items);
-        _tmpDiscount = _discounts.For(_tmpSum, recipientKind, recipientDone);
+        _tmpSum = Subtotal(request.Items!);
+        _tmpDiscount = _discounts.For(_tmpSum, request.Recipient);
         decimal ship = _shipping.For(_tmpSum - _tmpDiscount);
         decimal total = _tmpSum - _tmpDiscount + ship;
 
-        if (sendMail)
+        if (request.SendMail)
         {
-            _log.Add("mail -> " + recipientMail);
+            _log.Add("mail -> " + request.Recipient.Email);
         }
 
-        return _report.Build(
-            orderId,
-            recipientName,
-            items,
-            _tmpDiscount,
-            ship,
-            total,
-            currency);
+        return _report.Build(request, _tmpDiscount, ship, total);
     }
 
-    private static decimal Subtotal(List<PickupLine> items)
+    private static string? Validate(OrderRequest request)
+    {
+        if (request.Items is null) return "ERR: null";
+        if (request.Items.Count == 0) return "ERR: empty";
+        if (request.State is not (OrderState.New or OrderState.Paid))
+            return "ERR: state";
+        if (!request.Recipient.HasValidEmail) return "ERR: mail";
+        return null;
+    }
+
+    private static decimal Subtotal(IReadOnlyList<PickupLine> items)
     {
         decimal sum = 0m;
         foreach (var it in items)
@@ -92,11 +87,11 @@ public class LegacyPickupProcessor
         return sum;
     }
 
-    public decimal Preview(RecipientKind recipientKind, int recipientDone,
-        List<PickupLine> items)
+    public decimal Preview(Recipient recipient,
+        IReadOnlyList<PickupLine> items)
     {
         decimal subtotal = Subtotal(items);
-        decimal discount = _discounts.For(subtotal, recipientKind, recipientDone);
+        decimal discount = _discounts.For(subtotal, recipient);
         decimal payable = subtotal - discount;
         return payable + _shipping.For(payable);
     }

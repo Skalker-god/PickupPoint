@@ -24,6 +24,18 @@ public class LegacyCharacterizationTests
         new PickupLine { Code = "C-3", Qty = 1, Price = subtotal - 700m },
     };
 
+    private static Recipient MakeRecipient(
+        string name,
+        string mail,
+        RecipientKind kind,
+        int done) => new()
+        {
+            Name = name,
+            Email = mail,
+            Kind = kind,
+            DoneCount = done,
+        };
+
     [Theory]
     [InlineData(null, OrderState.New, "a@b.c", "ERR: null")]
     [InlineData("empty", OrderState.New, "a@b.c", "ERR: empty")]
@@ -43,18 +55,13 @@ public class LegacyCharacterizationTests
         };
         var sut = new LegacyPickupProcessor();
 
-        var actual = sut.Handle(
+        var actual = sut.Handle(new OrderRequest(
             1001,
-            7,
-            "Іван",
-            mail,
-            RecipientKind.Regular,
-            0,
+            MakeRecipient("Іван", mail, RecipientKind.Regular, 0),
             items,
             state,
             "UAH",
-            new DateTime(2026, 3, 1),
-            false);
+            false));
 
         Assert.Equal(expected, actual);
     }
@@ -64,18 +71,13 @@ public class LegacyCharacterizationTests
     {
         var sut = new LegacyPickupProcessor();
 
-        var report = sut.Handle(
+        var report = sut.Handle(new OrderRequest(
             1001,
-            7,
-            "Іван",
-            "a@b.c",
-            RecipientKind.Vip,
-            3,
+            MakeRecipient("Іван", "a@b.c", RecipientKind.Vip, 3),
             TwoLines(),
             OrderState.New,
             "UAH",
-            new DateTime(2026, 3, 1),
-            false);
+            false));
 
         var expected =
             "Документ #1001\n" +
@@ -101,7 +103,9 @@ public class LegacyCharacterizationTests
     {
         var sut = new LegacyPickupProcessor();
 
-        var total = sut.Preview(kind, done, TwoLines());
+        var total = sut.Preview(
+            MakeRecipient("Клієнт", "a@b.c", kind, done),
+            TwoLines());
 
         Assert.Equal(expected, total);
     }
@@ -111,7 +115,9 @@ public class LegacyCharacterizationTests
     {
         var sut = new LegacyPickupProcessor();
 
-        var total = sut.Preview(RecipientKind.Regular, 0, LinesWithSubtotal(1000m));
+        var total = sut.Preview(
+            MakeRecipient("Клієнт", "a@b.c", RecipientKind.Regular, 0),
+            LinesWithSubtotal(1000m));
 
         Assert.Equal(1000m, total);
     }
@@ -121,7 +127,9 @@ public class LegacyCharacterizationTests
     {
         var sut = new LegacyPickupProcessor();
 
-        var total = sut.Preview(RecipientKind.Regular, 0, LinesWithSubtotal(999.99m));
+        var total = sut.Preview(
+            MakeRecipient("Клієнт", "a@b.c", RecipientKind.Regular, 0),
+            LinesWithSubtotal(999.99m));
 
         Assert.Equal(1059.99m, total);
     }
