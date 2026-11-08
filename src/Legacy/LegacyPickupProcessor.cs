@@ -79,6 +79,11 @@ public class LegacyPickupProcessor
     {
         if (request.Items is null) return "ERR: null";
         if (request.Items.Count == 0) return "ERR: empty";
+        return ValidateCheckout(request);
+    }
+
+    private static string? ValidateCheckout(OrderRequest request)
+    {
         if (request.State is not (OrderState.New or OrderState.Paid))
             return "ERR: state";
         if (!request.Recipient.HasValidEmail) return "ERR: mail";
