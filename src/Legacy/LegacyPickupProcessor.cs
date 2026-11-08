@@ -50,36 +50,13 @@ public class LegacyPickupProcessor
         List<PickupLine>? items, OrderState state,
         string currency, DateTime createdAt, bool sendMail)
     {
-        if (items != null)
-        {
-            if (items.Count > 0)
-            {
-                if (state == OrderState.New || state == OrderState.Paid)
-                {
-                    if (recipientMail != null &&
-                        recipientMail.Contains("@"))
-                    {
-                        _log.Add("ok " + orderId);
-                    }
-                    else
-                    {
-                        return "ERR: mail";
-                    }
-                }
-                else
-                {
-                    return "ERR: state";
-                }
-            }
-            else
-            {
-                return "ERR: empty";
-            }
-        }
-        else
-        {
-            return "ERR: null";
-        }
+        if (items is null) return "ERR: null";
+        if (items.Count == 0) return "ERR: empty";
+        if (state is not (OrderState.New or OrderState.Paid))
+            return "ERR: state";
+        if (recipientMail is null || !recipientMail.Contains("@"))
+            return "ERR: mail";
+        _log.Add("ok " + orderId);
 
         _tmpSum = 0m;
         for (int i = 0; i < items.Count; i++)
