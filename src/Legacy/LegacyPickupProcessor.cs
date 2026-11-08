@@ -28,6 +28,17 @@ public sealed class Recipient
     public DateTime SinceUtc { get; init; }
     public bool HasValidEmail => Email is not null && Email.Contains("@");
     public bool IsLoyal => DoneCount > PricingRules.LoyalOrders;
+
+    public string Describe()
+    {
+        string s = Name.Trim().ToUpper();
+        if (Kind == RecipientKind.Vip) s += " [VIP]";
+        if (IsLoyal) s += " [ЛОЯЛЬНИЙ]";
+        s += " <" + Email.ToLower() + ">";
+        int years = DateTime.Now.Year - SinceUtc.Year;
+        s += " стаж " + years;
+        return s;
+    }
 }
 
 public class PickupLine
@@ -94,17 +105,6 @@ public class LegacyPickupProcessor
         decimal discount = _discounts.For(subtotal, recipient);
         decimal payable = subtotal - discount;
         return payable + _shipping.For(payable);
-    }
-
-    public string DescribeClient(Recipient c)
-    {
-        string s = c.Name.Trim().ToUpper();
-        if (c.Kind == RecipientKind.Vip) s += " [VIP]";
-        if (c.DoneCount > PricingRules.LoyalOrders) s += " [ЛОЯЛЬНИЙ]";
-        s += " <" + c.Email.ToLower() + ">";
-        int years = DateTime.Now.Year - c.SinceUtc.Year;
-        s += " стаж " + years;
-        return s;
     }
 
     public string DumpLog()
