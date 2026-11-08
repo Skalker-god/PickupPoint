@@ -1,0 +1,12 @@
+namespace PickupPoint.Legacy;
+
+public static class PricingRules
+{
+    public const decimal VipRate = 0.15m;
+    public const decimal StaffRate = 0.30m;
+    public const decimal LoyalRate = 0.05m;
+    public const decimal MaxDiscount = 500m;
+    public const decimal FreeShipFrom = 1000m;
+    public const decimal ShipCost = 60m;
+    public const int LoyalOrders = 10;
+}

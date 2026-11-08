@@ -25,13 +25,13 @@ public class LegacyCharacterizationTests
     };
 
     [Theory]
-    [InlineData(null, "new", "a@b.c", "ERR: null")]
-    [InlineData("empty", "new", "a@b.c", "ERR: empty")]
-    [InlineData("two", "draft", "a@b.c", "ERR: state")]
-    [InlineData("two", "new", "no-mail", "ERR: mail")]
+    [InlineData(null, OrderState.New, "a@b.c", "ERR: null")]
+    [InlineData("empty", OrderState.New, "a@b.c", "ERR: empty")]
+    [InlineData("two", OrderState.Draft, "a@b.c", "ERR: state")]
+    [InlineData("two", OrderState.New, "no-mail", "ERR: mail")]
     public void Handle_BadInput_ReturnsErrorCode(
         string? kindOfItems,
-        string state,
+        OrderState state,
         string mail,
         string expected)
     {
@@ -48,7 +48,7 @@ public class LegacyCharacterizationTests
             7,
             "Іван",
             mail,
-            "regular",
+            RecipientKind.Regular,
             0,
             items,
             state,
@@ -69,10 +69,10 @@ public class LegacyCharacterizationTests
             7,
             "Іван",
             "a@b.c",
-            "vip",
+            RecipientKind.Vip,
             3,
             TwoLines(),
-            "new",
+            OrderState.New,
             "UAH",
             new DateTime(2026, 3, 1),
             false);
@@ -90,12 +90,12 @@ public class LegacyCharacterizationTests
     }
 
     [Theory]
-    [InlineData("regular", 0, 760)]
-    [InlineData("vip", 0, 655)]
-    [InlineData("staff", 0, 550)]
-    [InlineData("regular", 11, 725)]
+    [InlineData(RecipientKind.Regular, 0, 760)]
+    [InlineData(RecipientKind.Vip, 0, 655)]
+    [InlineData(RecipientKind.Staff, 0, 550)]
+    [InlineData(RecipientKind.Regular, 11, 725)]
     public void Preview_ByKind_ReturnsTotal(
-        string kind,
+        RecipientKind kind,
         int done,
         decimal expected)
     {
@@ -111,7 +111,7 @@ public class LegacyCharacterizationTests
     {
         var sut = new LegacyPickupProcessor();
 
-        var total = sut.Preview("regular", 0, LinesWithSubtotal(1000m));
+        var total = sut.Preview(RecipientKind.Regular, 0, LinesWithSubtotal(1000m));
 
         Assert.Equal(1000m, total);
     }
@@ -121,7 +121,7 @@ public class LegacyCharacterizationTests
     {
         var sut = new LegacyPickupProcessor();
 
-        var total = sut.Preview("regular", 0, LinesWithSubtotal(999.99m));
+        var total = sut.Preview(RecipientKind.Regular, 0, LinesWithSubtotal(999.99m));
 
         Assert.Equal(1059.99m, total);
     }
@@ -133,7 +133,7 @@ public class LegacyCharacterizationTests
         {
             Name = " іван ",
             Email = "IVAN@MAIL.COM",
-            Kind = "vip",
+            Kind = RecipientKind.Vip,
             DoneCount = 12,
             SinceUtc = new DateTime(2020, 1, 1),
         };

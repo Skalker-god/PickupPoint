@@ -3,14 +3,31 @@ using System.Collections.Generic;
 
 namespace PickupPoint.Legacy;
 
-public class Recipient
+public enum RecipientKind
 {
-    public int Id;
-    public string Name = "";
-    public string Email = "";
-    public string Kind = "regular";
-    public int DoneCount;
-    public DateTime SinceUtc;
+    Regular,
+    Vip,
+    Staff,
+}
+
+public enum OrderState
+{
+    Draft,
+    New,
+    Paid,
+    Closed,
+}
+
+public sealed class Recipient
+{
+    public int Id { get; init; }
+    public string Name { get; init; } = "";
+    public string Email { get; init; } = "";
+    public RecipientKind Kind { get; init; }
+    public int DoneCount { get; init; }
+    public DateTime SinceUtc { get; init; }
+    public bool HasValidEmail => Email is not null && Email.Contains("@");
+    public bool IsLoyal => DoneCount > PricingRules.LoyalOrders;
 }
 
 public class PickupLine
@@ -29,15 +46,15 @@ public class LegacyPickupProcessor
 
     public string Handle(int orderId, int recipientId,
         string recipientName, string? recipientMail,
-        string recipientKind, int recipientDone,
-        List<PickupLine>? items, string state,
+        RecipientKind recipientKind, int recipientDone,
+        List<PickupLine>? items, OrderState state,
         string currency, DateTime createdAt, bool sendMail)
     {
         if (items != null)
         {
             if (items.Count > 0)
             {
-                if (state == "new" || state == "paid")
+                if (state == OrderState.New || state == OrderState.Paid)
                 {
                     if (recipientMail != null &&
                         recipientMail.Contains("@"))
@@ -71,24 +88,24 @@ public class LegacyPickupProcessor
         }
 
         _tmpDiscount = 0m;
-        if (recipientKind == "vip")
+        if (recipientKind == RecipientKind.Vip)
         {
-            _tmpDiscount = _tmpSum * 0.15m;
-            if (_tmpDiscount > 500m) _tmpDiscount = 500m;
+            _tmpDiscount = _tmpSum * PricingRules.VipRate;
+            if (_tmpDiscount > PricingRules.MaxDiscount) _tmpDiscount = PricingRules.MaxDiscount;
         }
-        else if (recipientKind == "staff")
+        else if (recipientKind == RecipientKind.Staff)
         {
-            _tmpDiscount = _tmpSum * 0.30m;
-            if (_tmpDiscount > 500m) _tmpDiscount = 500m;
+            _tmpDiscount = _tmpSum * PricingRules.StaffRate;
+            if (_tmpDiscount > PricingRules.MaxDiscount) _tmpDiscount = PricingRules.MaxDiscount;
         }
-        else if (recipientDone > 10)
+        else if (recipientDone > PricingRules.LoyalOrders)
         {
-            _tmpDiscount = _tmpSum * 0.05m;
-            if (_tmpDiscount > 500m) _tmpDiscount = 500m;
+            _tmpDiscount = _tmpSum * PricingRules.LoyalRate;
+            if (_tmpDiscount > PricingRules.MaxDiscount) _tmpDiscount = PricingRules.MaxDiscount;
         }
 
         decimal ship = 0m;
-        if (_tmpSum - _tmpDiscount < 1000m) ship = 60m;
+        if (_tmpSum - _tmpDiscount < PricingRules.FreeShipFrom) ship = PricingRules.ShipCost;
         decimal total = _tmpSum - _tmpDiscount + ship;
 
         string txt = "Документ #" + orderId + "\n";
@@ -114,7 +131,7 @@ public class LegacyPickupProcessor
         return txt;
     }
 
-    public decimal Preview(string recipientKind, int recipientDone,
+    public decimal Preview(RecipientKind recipientKind, int recipientDone,
         List<PickupLine> items)
     {
         decimal s = 0m;
@@ -124,32 +141,32 @@ public class LegacyPickupProcessor
         }
 
         decimal d = 0m;
-        if (recipientKind == "vip")
+        if (recipientKind == RecipientKind.Vip)
         {
-            d = s * 0.15m;
-            if (d > 500m) d = 500m;
+            d = s * PricingRules.VipRate;
+            if (d > PricingRules.MaxDiscount) d = PricingRules.MaxDiscount;
         }
-        else if (recipientKind == "staff")
+        else if (recipientKind == RecipientKind.Staff)
         {
-            d = s * 0.30m;
-            if (d > 500m) d = 500m;
+            d = s * PricingRules.StaffRate;
+            if (d > PricingRules.MaxDiscount) d = PricingRules.MaxDiscount;
         }
-        else if (recipientDone > 10)
+        else if (recipientDone > PricingRules.LoyalOrders)
         {
-            d = s * 0.05m;
-            if (d > 500m) d = 500m;
+            d = s * PricingRules.LoyalRate;
+            if (d > PricingRules.MaxDiscount) d = PricingRules.MaxDiscount;
         }
 
         decimal sh = 0m;
-        if (s - d < 1000m) sh = 60m;
+        if (s - d < PricingRules.FreeShipFrom) sh = PricingRules.ShipCost;
         return s - d + sh;
     }
 
     public string DescribeClient(Recipient c)
     {
         string s = c.Name.Trim().ToUpper();
-        if (c.Kind == "vip") s += " [VIP]";
-        if (c.DoneCount > 10) s += " [ЛОЯЛЬНИЙ]";
+        if (c.Kind == RecipientKind.Vip) s += " [VIP]";
+        if (c.DoneCount > PricingRules.LoyalOrders) s += " [ЛОЯЛЬНИЙ]";
         s += " <" + c.Email.ToLower() + ">";
         int years = DateTime.Now.Year - c.SinceUtc.Year;
         s += " стаж " + years;
