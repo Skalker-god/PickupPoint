@@ -51,8 +51,6 @@ public class PickupLine
 
 public class LegacyPickupProcessor
 {
-    private decimal _tmpSum;
-    private decimal _tmpDiscount;
     private readonly List<string> _log = new();
     private readonly DiscountPolicy _discounts = new();
     private readonly ShippingPolicy _shipping = new();
@@ -64,17 +62,17 @@ public class LegacyPickupProcessor
         if (error != null) return error;
         _log.Add("ok " + request.OrderId);
 
-        _tmpSum = Subtotal(request.Items!);
-        _tmpDiscount = _discounts.For(_tmpSum, request.Recipient);
-        decimal ship = _shipping.For(_tmpSum - _tmpDiscount);
-        decimal total = _tmpSum - _tmpDiscount + ship;
+        decimal subtotal = Subtotal(request.Items!);
+        decimal discount = _discounts.For(subtotal, request.Recipient);
+        decimal ship = _shipping.For(subtotal - discount);
+        decimal total = subtotal - discount + ship;
 
         if (request.SendMail)
         {
             _log.Add("mail -> " + request.Recipient.Email);
         }
 
-        return _report.Build(request, _tmpDiscount, ship, total);
+        return _report.Build(request, discount, ship, total);
     }
 
     private static string? Validate(OrderRequest request)
