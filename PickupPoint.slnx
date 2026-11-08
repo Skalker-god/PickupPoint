@@ -1,4 +1,8 @@
 <Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Legacy/">
+    <Project Path="src/Legacy/PickupPoint.Legacy.csproj" />
+  </Folder>
   <Project Path="PickupPoint.App/PickupPoint.App.csproj" />
   <Project Path="PickupPoint.Core/PickupPoint.Core.csproj" />
   <Project Path="PickupPoint.Tests/PickupPoint.Tests.csproj" />
