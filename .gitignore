@@ -488,3 +488,7 @@ data/*.local.json
 # файли, створені демонстрацією ЛР 5
 audit.log
 report.csv
+
+# Результати тестів і покриття (ЛР 7)
+TestResults/
+coverage/
