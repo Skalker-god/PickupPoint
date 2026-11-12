@@ -46,20 +46,25 @@ public static class OrderTotalCalculator
     /// <returns>Розмір знижки в гривнях; 0 для малого замовлення.</returns>
     /// <exception cref="ArgumentOutOfRangeException">Сума від’ємна.</exception>
     public static decimal VolumeDiscountOf(decimal amount)
+{
+    ArgumentOutOfRangeException.ThrowIfNegative(amount);
+    decimal discount = 0m;
+    if (amount > PricingRules.LargeOrderFrom)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(amount);
-        if (amount > PricingRules.LargeOrderFrom)
-        {
-            return amount * PricingRules.LargeOrderRate;
-        }
-
-        if (amount > PricingRules.MediumOrderFrom)
-        {
-            return amount * PricingRules.MediumOrderRate;
-        }
-
-        return 0m;
+        discount = amount * PricingRules.LargeOrderRate;
     }
+    else if (amount > PricingRules.MediumOrderFrom)
+    {
+        discount = amount * PricingRules.MediumOrderRate;
+    }
+
+    if (discount > PricingRules.MaxVolumeDiscount)
+    {
+        discount = PricingRules.MaxVolumeDiscount;
+    }
+
+    return discount;
+}
 
     /// <summary>Обчислює знижку за кодом купона. Не змінює стан.</summary>
     /// <param name="amount">Сума, від якої рахується знижка, грн.</param>

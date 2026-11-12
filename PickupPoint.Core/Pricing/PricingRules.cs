@@ -16,6 +16,8 @@ internal static class PricingRules
 
     public const decimal MediumOrderRate = 0.05m;
 
+    public const decimal MaxVolumeDiscount = 1000m;
+
     public const decimal WeekendRate = 0.02m;
 
     public const decimal CouponSaleRate = 0.10m;
