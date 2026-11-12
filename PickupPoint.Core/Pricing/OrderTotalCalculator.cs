@@ -46,25 +46,12 @@ public static class OrderTotalCalculator
     /// <returns>Розмір знижки в гривнях; 0 для малого замовлення.</returns>
     /// <exception cref="ArgumentOutOfRangeException">Сума від’ємна.</exception>
     public static decimal VolumeDiscountOf(decimal amount)
-{
-    ArgumentOutOfRangeException.ThrowIfNegative(amount);
-    decimal discount = 0m;
-    if (amount > PricingRules.LargeOrderFrom)
     {
-        discount = amount * PricingRules.LargeOrderRate;
+        ArgumentOutOfRangeException.ThrowIfNegative(amount);
+        return Math.Min(
+            amount * VolumeRateOf(amount),
+            PricingRules.MaxVolumeDiscount);
     }
-    else if (amount > PricingRules.MediumOrderFrom)
-    {
-        discount = amount * PricingRules.MediumOrderRate;
-    }
-
-    if (discount > PricingRules.MaxVolumeDiscount)
-    {
-        discount = PricingRules.MaxVolumeDiscount;
-    }
-
-    return discount;
-}
 
     /// <summary>Обчислює знижку за кодом купона. Не змінює стан.</summary>
     /// <param name="amount">Сума, від якої рахується знижка, грн.</param>
@@ -148,5 +135,20 @@ public static class OrderTotalCalculator
             ? 0m
             : Math.Round(Math.Max(total, 0m), PricingRules.CurrencyDigits);
         return new TotalResult(total, NextStatusOf(request.Status, total));
+    }
+
+    /// <summary>Вибирає ставку знижки за обсягом. Не змінює стан.</summary>
+    /// <param name="amount">Сума замовлення, грн.</param>
+    /// <returns>Ставка знижки; 0 для малого замовлення.</returns>
+    private static decimal VolumeRateOf(decimal amount)
+    {
+        if (amount > PricingRules.LargeOrderFrom)
+        {
+            return PricingRules.LargeOrderRate;
+        }
+
+        return amount > PricingRules.MediumOrderFrom
+           ? PricingRules.MediumOrderRate
+           : 0m;
     }
 }

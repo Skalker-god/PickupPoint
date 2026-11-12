@@ -13,6 +13,7 @@ public sealed class VolumeDiscountTests
     [InlineData(2001, 100.05)]
     [InlineData(5000, 250)]
     [InlineData(5001, 500.1)]
+    [InlineData(10001, 1000)]
     public void VolumeDiscountOf_Boundaries_MatchesTable(
         double amount, double expected)
     {
