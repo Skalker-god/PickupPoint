@@ -43,4 +43,17 @@ public sealed class VolumeDiscountTests
         // Assert
         Assert.Equal("amount", ex.ParamName);
     }
+
+    [Fact]
+    public void VolumeDiscountOf_HugeOrder_IsCappedAtMax()
+    {
+        // Arrange
+        decimal amount = 20000m;
+
+        // Act
+        decimal actual = OrderTotalCalculator.VolumeDiscountOf(amount);
+
+        // Assert
+        Assert.Equal(1000m, actual);
+    }
 }
