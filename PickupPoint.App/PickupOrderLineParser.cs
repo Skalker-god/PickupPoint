@@ -33,8 +33,8 @@ internal static class PickupOrderLineParser
     {
         if (string.IsNullOrWhiteSpace(sku) || sku.Trim().Length > MaxSkuLength)
         {
-            return Result<PickupOrderLine>.Fail(
-                "Артикул — непорожній рядок до 20 символів");
+            return Result<PickupOrderLine>.Fail(FormattableString.Invariant(
+                $"Артикул — непорожній рядок до {MaxSkuLength} символів"));
         }
 
         if (!int.TryParse(
@@ -44,8 +44,8 @@ internal static class PickupOrderLineParser
                 out int parsedQuantity)
             || parsedQuantity is < 1 or > MaxQuantity)
         {
-            return Result<PickupOrderLine>.Fail(
-                "Кількість — ціле число від 1 до 1000");
+            return Result<PickupOrderLine>.Fail(FormattableString.Invariant(
+                $"Кількість — ціле число від 1 до {MaxQuantity}"));
         }
 
         if (!decimal.TryParse(
@@ -60,7 +60,8 @@ internal static class PickupOrderLineParser
 
         if (parsedPrice is < 0m or > MaxUnitPrice)
         {
-            return Result<PickupOrderLine>.Fail("Ціна — від 0 до 1000000");
+            return Result<PickupOrderLine>.Fail(FormattableString.Invariant(
+                $"Ціна — від 0 до {MaxUnitPrice:0}"));
         }
 
         return Result<PickupOrderLine>.Ok(
