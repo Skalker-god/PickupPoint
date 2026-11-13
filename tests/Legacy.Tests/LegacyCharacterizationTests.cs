@@ -1,5 +1,4 @@
 using System.Globalization;
-using PickupPoint.Legacy;
 using Xunit;
 
 namespace PickupPoint.Legacy.Tests;

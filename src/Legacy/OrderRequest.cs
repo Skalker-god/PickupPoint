@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace PickupPoint.Legacy;
 
 public sealed record OrderRequest(

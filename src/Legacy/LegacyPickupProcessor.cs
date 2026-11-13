@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace PickupPoint.Legacy;
 
 public enum RecipientKind
@@ -32,8 +29,16 @@ public sealed class Recipient
     public string Describe()
     {
         string s = Name.Trim().ToUpper();
-        if (Kind == RecipientKind.Vip) s += " [VIP]";
-        if (IsLoyal) s += " [ЛОЯЛЬНИЙ]";
+        if (Kind == RecipientKind.Vip)
+        {
+            s += " [VIP]";
+        }
+
+        if (IsLoyal)
+        {
+            s += " [ЛОЯЛЬНИЙ]";
+        }
+
         s += " <" + Email.ToLower() + ">";
         int years = DateTime.Now.Year - SinceUtc.Year;
         s += " стаж " + years;
@@ -59,7 +64,11 @@ public class LegacyPickupProcessor
     public string Handle(OrderRequest request)
     {
         string? error = Validate(request);
-        if (error != null) return error;
+        if (error != null)
+        {
+            return error;
+        }
+
         _log.Add("ok " + request.OrderId);
 
         decimal subtotal = Subtotal(request.Items!);
@@ -77,16 +86,31 @@ public class LegacyPickupProcessor
 
     private static string? Validate(OrderRequest request)
     {
-        if (request.Items is null) return "ERR: null";
-        if (request.Items.Count == 0) return "ERR: empty";
+        if (request.Items is null)
+        {
+            return "ERR: null";
+        }
+
+        if (request.Items.Count == 0)
+        {
+            return "ERR: empty";
+        }
+
         return ValidateCheckout(request);
     }
 
     private static string? ValidateCheckout(OrderRequest request)
     {
         if (request.State is not (OrderState.New or OrderState.Paid))
+        {
             return "ERR: state";
-        if (!request.Recipient.HasValidEmail) return "ERR: mail";
+        }
+
+        if (!request.Recipient.HasValidEmail)
+        {
+            return "ERR: mail";
+        }
+
         return null;
     }
 

@@ -10,7 +10,7 @@ internal static class PickupGuards
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(orderId);
         ArgumentException.ThrowIfNullOrWhiteSpace(recipientName);
         ArgumentException.ThrowIfNullOrWhiteSpace(recipientEmail);
-        if (!recipientEmail.Contains('@'))
+        if (!recipientEmail.Contains('@', StringComparison.Ordinal))
         {
             throw new ArgumentException(
                 "Пошта має містити символ @.",
