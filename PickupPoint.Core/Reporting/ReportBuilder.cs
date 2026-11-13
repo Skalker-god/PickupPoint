@@ -24,13 +24,4 @@ public sealed class ReportBuilder
 
         return text.ToString();
     }
-
-    /// <summary>Описує кількість позицій у звіті.</summary>
-    /// <param name="count">Кількість позицій.</param>
-    /// <returns>Рядок опису з заголовком звіту.</returns>
-    public string Describe(int count)
-    {
-        string note;
-        return Title + ": позицій " + count;
-    }
 }
