@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Microsoft.Extensions.Logging;
+using PickupPoint.Core;
 using PickupPoint.Core.Abstractions;
 using PickupPoint.Core.Audit;
 using PickupPoint.Core.Domain;
@@ -20,6 +21,7 @@ internal static class Program
 {
     private static int Main()
     {
+        Console.WriteLine($"PickupPoint v{VersionInfo.Current()}");
         using ILoggerFactory factory = LoggerFactory.Create(builder =>
         {
             builder.AddSimpleConsole(options =>
