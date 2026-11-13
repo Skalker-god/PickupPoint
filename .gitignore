@@ -495,3 +495,6 @@ coverage/
 
 appsettings.Local.json
 **/*.secrets.json
+
+# Локальні налаштування редактора VS Code
+.vscode/
