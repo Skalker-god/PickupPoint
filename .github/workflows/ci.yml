@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, 'feature/**' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Отримати код
+        uses: actions/checkout@v4
+
+      - name: Установити .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Відновити залежності
+        run: dotnet restore
+
+      - name: Перевірка форматування
+        run: dotnet format --verify-no-changes --no-restore
+
+      - name: Складання Release з аналізаторами
+        run: dotnet build -c Release --no-restore
+
+      - name: Тести і покриття
+        run: >
+          dotnet test PickupPoint.Tests -c Release --no-restore
+          /p:CollectCoverage=true
+          /p:CoverletOutputFormat=cobertura
+          /p:Include="[PickupPoint.Core]*"
+          /p:Threshold=60
+          /p:ThresholdType=line
+
+      - name: Тести Legacy
+        run: dotnet test tests/Legacy.Tests -c Release --no-restore
+
+      - name: Зберегти звіт про покриття
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: '**/coverage.cobertura.xml'
