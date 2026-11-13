@@ -48,17 +48,9 @@ public static class OrderTotalCalculator
     public static decimal VolumeDiscountOf(decimal amount)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(amount);
-        if (amount > PricingRules.LargeOrderFrom)
-        {
-            return amount * PricingRules.LargeOrderRate;
-        }
-
-        if (amount > PricingRules.MediumOrderFrom)
-        {
-            return amount * PricingRules.MediumOrderRate;
-        }
-
-        return 0m;
+        return Math.Min(
+            amount * VolumeRateOf(amount),
+            PricingRules.MaxVolumeDiscount);
     }
 
     /// <summary>Обчислює знижку за кодом купона. Не змінює стан.</summary>
@@ -143,5 +135,20 @@ public static class OrderTotalCalculator
             ? 0m
             : Math.Round(Math.Max(total, 0m), PricingRules.CurrencyDigits);
         return new TotalResult(total, NextStatusOf(request.Status, total));
+    }
+
+    /// <summary>Вибирає ставку знижки за обсягом. Не змінює стан.</summary>
+    /// <param name="amount">Сума замовлення, грн.</param>
+    /// <returns>Ставка знижки; 0 для малого замовлення.</returns>
+    private static decimal VolumeRateOf(decimal amount)
+    {
+        if (amount > PricingRules.LargeOrderFrom)
+        {
+            return PricingRules.LargeOrderRate;
+        }
+
+        return amount > PricingRules.MediumOrderFrom
+           ? PricingRules.MediumOrderRate
+           : 0m;
     }
 }

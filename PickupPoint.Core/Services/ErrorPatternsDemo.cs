@@ -1,4 +1,4 @@
-﻿using PickupPoint.Core.Abstractions;
+using PickupPoint.Core.Abstractions;
 using PickupPoint.Core.Domain;
 using PickupPoint.Core.Errors;
 
