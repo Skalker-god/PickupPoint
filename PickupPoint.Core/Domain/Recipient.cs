@@ -24,7 +24,7 @@ public sealed record Recipient
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(phone);
         ArgumentException.ThrowIfNullOrWhiteSpace(email);
-        if (!email.Contains('@'))
+        if (!email.Contains('@', StringComparison.Ordinal))
         {
             throw new ArgumentException(
                 "Пошта має містити символ @.",

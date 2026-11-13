@@ -13,7 +13,7 @@ public static class VersionInfo
         AssemblyInformationalVersionAttribute? attribute =
             assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
         string raw = attribute?.InformationalVersion ?? "0.0.0";
-        int plus = raw.IndexOf('+');
+        int plus = raw.IndexOf('+', StringComparison.Ordinal);
         return plus < 0 ? raw : raw[..plus];
     }
 }
