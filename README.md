@@ -1,6 +1,6 @@
 # PickupPoint
 
-![CI](https://github.com/Skalker-god/PickupPoint/actions/workflows/ci.yml/badge.svg?branch=feature%2Fci-pipeline)
+![CI](https://github.com/Skalker-god/PickupPoint/actions/workflows/ci.yml/badge.svg?branch=main)
 
 Навчальний проєкт з дисципліни «Конструювання програмного забезпечення».
 Варіант № 18: пункт видачі замовлень.
