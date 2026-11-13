@@ -19,16 +19,16 @@ public static class OrderReport
         ArgumentNullException.ThrowIfNull(result);
         CultureInfo culture = CultureInfo.InvariantCulture;
         StringBuilder text = new();
-        text.AppendLine($"Замовлення № {request.OrderId}");
-        text.AppendLine($"Одержувач: {request.Recipient.Name}");
+        text.AppendLine(culture, $"Замовлення № {request.OrderId}");
+        text.AppendLine(culture, $"Одержувач: {request.Recipient.Name}");
         foreach (PickupOrderLine line in request.Lines)
         {
-            text.AppendLine($"{line.Sku} x {line.Quantity}");
+            text.AppendLine(culture, $"{line.Sku} x {line.Quantity}");
         }
 
         text.AppendLine(string.Format(
             culture, "Разом: {0:F2}", result.Total));
-        text.AppendLine($"Стан: {result.Status}");
+        text.AppendLine(culture, $"Стан: {result.Status}");
         return text.ToString();
     }
 }

@@ -113,6 +113,8 @@ dotnet_diagnostic.CS8509.severity = error
 dotnet_diagnostic.CA1051.severity = error
 # S-10: поріг складності 12 задано в CodeMetricsConfig.txt
 dotnet_diagnostic.CA1502.severity = error
+# CA1305: культурозалежні виклики; з ЛР 8 порушення ламають збірку
+dotnet_diagnostic.CA1305.severity = error
 
 # StyleCop: правила, які лишаємо суворими
 dotnet_diagnostic.SA1028.severity = error
@@ -142,8 +144,6 @@ dotnet_diagnostic.SA1623.severity = none
 dotnet_diagnostic.SA1642.severity = none
 # кома в кінці багаторядкового ініціалізатора необов'язкова (ДОПУСКАЄТЬСЯ)
 dotnet_diagnostic.SA1413.severity = none
-# культурозалежні Parse і ToString: борг B-05, усувається в ЛР 6
-dotnet_diagnostic.CA1305.severity = none
 
 # ---------- ЛР 3 ----------
 [PickupPoint.Tests/**.cs]
@@ -152,6 +152,3 @@ dotnet_diagnostic.CS1591.severity = none
 dotnet_diagnostic.SA1600.severity = none
 dotnet_diagnostic.SA1602.severity = none
 dotnet_diagnostic.CA1707.severity = none
-
-# CA1305: культурозалежні виклики; з ЛР 8 порушення ламають збірку
-dotnet_diagnostic.CA1305.severity = error
