@@ -17,8 +17,8 @@
 ## Складання та запуск
 
 ```bash
-dotnet build
-dotnet run --project PickupPoint.App
+dotnet build -c Release
+dotnet run --project PickupPoint.App -c Release
 ```
 
 Демонстраційне замовлення має меню: додати позицію, позначити прибуття,
