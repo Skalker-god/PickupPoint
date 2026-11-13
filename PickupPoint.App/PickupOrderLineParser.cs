@@ -10,6 +10,15 @@ namespace PickupPoint.App;
 /// </summary>
 internal static class PickupOrderLineParser
 {
+    private const int MaxSkuLength = 20;
+    private const int MaxQuantity = 1000;
+    private const decimal MaxUnitPrice = 1_000_000m;
+    private const NumberStyles PriceStyles =
+        NumberStyles.AllowLeadingWhite
+        | NumberStyles.AllowTrailingWhite
+        | NumberStyles.AllowLeadingSign
+        | NumberStyles.AllowDecimalPoint;
+
     /// <summary>Розбирає артикул, кількість і ціну, введені користувачем.</summary>
     /// <param name="sku">Артикул товару.</param>
     /// <param name="quantity">Кількість у вигляді рядка.</param>
@@ -22,9 +31,10 @@ internal static class PickupOrderLineParser
         string quantity,
         string unitPrice)
     {
-        if (string.IsNullOrWhiteSpace(sku))
+        if (string.IsNullOrWhiteSpace(sku) || sku.Trim().Length > MaxSkuLength)
         {
-            return Result<PickupOrderLine>.Fail("Артикул порожній");
+            return Result<PickupOrderLine>.Fail(
+                "Артикул — непорожній рядок до 20 символів");
         }
 
         if (!int.TryParse(
@@ -32,21 +42,25 @@ internal static class PickupOrderLineParser
                 NumberStyles.Integer,
                 CultureInfo.InvariantCulture,
                 out int parsedQuantity)
-            || parsedQuantity <= 0)
+            || parsedQuantity is < 1 or > MaxQuantity)
         {
             return Result<PickupOrderLine>.Fail(
-                "Кількість — ціле число більше 0");
+                "Кількість — ціле число від 1 до 1000");
         }
 
         if (!decimal.TryParse(
                 unitPrice,
-                NumberStyles.Number,
+                PriceStyles,
                 CultureInfo.InvariantCulture,
-                out decimal parsedPrice)
-            || parsedPrice < 0m)
+                out decimal parsedPrice))
         {
             return Result<PickupOrderLine>.Fail(
-                "Ціна не може бути від’ємною");
+                "Ціна — число з крапкою, наприклад 250.50");
+        }
+
+        if (parsedPrice is < 0m or > MaxUnitPrice)
+        {
+            return Result<PickupOrderLine>.Fail("Ціна — від 0 до 1000000");
         }
 
         return Result<PickupOrderLine>.Ok(

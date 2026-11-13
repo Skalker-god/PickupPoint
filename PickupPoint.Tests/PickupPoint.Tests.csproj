@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PickupPoint.Core\PickupPoint.Core.csproj" />
+    <ProjectReference Include="..\PickupPoint.App\PickupPoint.App.csproj" />
   </ItemGroup>
 
 </Project>
